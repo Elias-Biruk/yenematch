@@ -5,12 +5,13 @@ import { handleError } from '@/lib/utils/errors'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await requireAuth(request)
+    const { id } = await params
     
-    const result = await deleteLike(session.userId, params.id)
+    const result = await deleteLike(session.userId, id)
     
     return NextResponse.json(result)
   } catch (error) {
