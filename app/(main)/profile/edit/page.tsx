@@ -157,27 +157,37 @@ export default function EditProfilePage() {
         throw new Error(`Age must be between ${MIN_AGE} and ${MAX_AGE}`)
       }
 
+      const requestBody = {
+        firstName: formData.firstName,
+        lastName: formData.lastName || undefined,
+        age,
+        gender: formData.gender,
+        city: formData.city.trim() || undefined,
+        bio: formData.bio.trim() || undefined,
+        interests: formData.interests,
+      }
+
+      console.log('Profile update request body:', requestBody)
+
       const response = await fetch('/api/profile/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName || undefined,
-          age,
-          gender: formData.gender,
-          city: formData.city,
-          bio: formData.bio || undefined,
-          interests: formData.interests,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
+      const responseData = await response.json()
+      console.log('Profile update response:', response.status, responseData)
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to update profile')
+        throw new Error(responseData.error || 'Failed to update profile')
       }
 
+      // Refresh profile data before redirecting
+      await fetchProfile()
+      
       router.push('/profile')
     } catch (err) {
+      console.error('Profile update error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setSaving(false)

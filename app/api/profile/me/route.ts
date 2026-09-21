@@ -31,10 +31,14 @@ export async function PATCH(request: NextRequest) {
     enforcePayloadLimit(request)
 
     const body = await request.json()
+    console.log('[API PATCH /api/profile/me] Request body:', body)
+    
     const validatedData = updateProfileSchema.parse(body)
+    console.log('[API PATCH /api/profile/me] Validated data:', validatedData)
     
     // Update basic profile fields (including firstName/lastName via service)
-    await updateProfile(session.userId, validatedData)
+    const updatedProfile = await updateProfile(session.userId, validatedData)
+    console.log('[API PATCH /api/profile/me] Updated profile city:', updatedProfile.city)
     
     // Update photos if provided
     if (validatedData.photos) {
@@ -66,10 +70,12 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Return updated profile
-    const updatedProfile = await getProfile(session.userId)
+    const finalProfile = await getProfile(session.userId)
+    console.log('[API PATCH /api/profile/me] Final profile city:', finalProfile.city)
     
-    return NextResponse.json(updatedProfile)
+    return NextResponse.json(finalProfile)
   } catch (error) {
+    console.error('[API PATCH /api/profile/me] Error:', error)
     const { message, statusCode } = handleError(error)
     return NextResponse.json(
       { error: message },

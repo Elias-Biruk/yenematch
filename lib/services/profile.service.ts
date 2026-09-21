@@ -99,6 +99,9 @@ export async function getProfile(userId: string) {
 }
 
 export async function updateProfile(userId: string, data: UpdateProfileInput) {
+  console.log('[Service updateProfile] Input data:', data)
+  console.log('[Service updateProfile] City value:', data.city, 'Type:', typeof data.city)
+
   // Update user name if provided
   if (data.firstName || data.lastName) {
     await prisma.user.update({
@@ -110,14 +113,18 @@ export async function updateProfile(userId: string, data: UpdateProfileInput) {
     })
   }
 
+  const updateData: any = {
+    ...(data.age !== undefined && { age: data.age }),
+    ...(data.gender !== undefined && { gender: data.gender }),
+    ...(data.city !== undefined && { city: data.city }),
+    ...(data.bio !== undefined && { bio: data.bio }),
+  }
+  
+  console.log('[Service updateProfile] Prisma update data:', updateData)
+
   const profile = await prisma.profile.update({
     where: { userId },
-    data: {
-      ...(data.age !== undefined && { age: data.age }),
-      ...(data.gender !== undefined && { gender: data.gender }),
-      ...(data.city !== undefined && { city: data.city }),
-      ...(data.bio !== undefined && { bio: data.bio }),
-    },
+    data: updateData,
     include: {
       photos: {
         orderBy: { order: 'asc' },
@@ -133,6 +140,8 @@ export async function updateProfile(userId: string, data: UpdateProfileInput) {
       },
     },
   })
+
+  console.log('[Service updateProfile] Updated profile city from DB:', profile.city)
 
   return profile
 }
@@ -160,6 +169,8 @@ export async function updateProfilePhotos(userId: string, photos: Array<{ url: s
 }
 
 export async function updateProfileInterests(userId: string, interests: string[]) {
+  console.log('[Service updateProfileInterests] Input interests:', interests)
+  
   const profile = await prisma.profile.findUnique({ where: { userId } })
   if (!profile) {
     throw new NotFoundError('Profile')
@@ -169,13 +180,17 @@ export async function updateProfileInterests(userId: string, interests: string[]
     where: { profile: { userId } },
   })
 
-  await prisma.interest.createMany({
-    data: interests.map((name) => ({
-      profileId: profile.id,
-      name,
-    })),
-  })
+  if (interests && interests.length > 0) {
+    await prisma.interest.createMany({
+      data: interests.map((name) => ({
+        profileId: profile.id,
+        name,
+      })),
+    })
+  }
 
+  console.log('[Service updateProfileInterests] Updated interests count:', interests?.length || 0)
+  
   return getProfile(userId)
 }
 
