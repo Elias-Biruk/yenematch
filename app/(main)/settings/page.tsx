@@ -34,7 +34,7 @@ export default function SettingsPage() {
   const fetchBlockedUsers = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/settings/blocked-users')
+      const response = await fetch('/api/blocks')
       if (!response.ok) {
         if (response.status === 401) {
           router.push('/login')
@@ -43,7 +43,13 @@ export default function SettingsPage() {
         throw new Error(t('failedToFetchBlockedUsers'))
       }
       const data = await response.json()
-      setBlockedUsers(data)
+      // Transform the data to match the expected format
+      const transformed = data.map((block: any) => ({
+        id: block.blockedId,
+        firstName: block.blocked.firstName,
+        lastName: block.blocked.lastName || '',
+      }))
+      setBlockedUsers(transformed)
     } catch (err) {
       setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
@@ -69,7 +75,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const response = await fetch(`/api/settings/blocked-users/${userId}`, {
+      const response = await fetch(`/api/blocks?targetUserId=${userId}`, {
         method: 'DELETE',
       })
 

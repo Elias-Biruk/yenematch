@@ -47,7 +47,22 @@ export default function LikesPage() {
         throw new Error(t('failedToFetchLikes'))
       }
       const data = await response.json()
-      setLikes(data)
+      // Transform the data to match the expected interface
+      const transformed = data.map((like: any) => ({
+        id: like.id,
+        userId: like.likedId,
+        age: like.liked.profile?.age || 0,
+        gender: like.liked.profile?.gender || '',
+        city: like.liked.profile?.city || '',
+        bio: like.liked.profile?.bio || null,
+        photos: like.liked.profile?.photos || [],
+        interests: like.liked.profile?.interests || [],
+        user: {
+          id: like.liked.id,
+          firstName: like.liked.firstName,
+        },
+      }))
+      setLikes(transformed)
     } catch (err) {
       setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
