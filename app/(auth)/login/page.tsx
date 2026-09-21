@@ -65,11 +65,13 @@ export default function LoginPage() {
       setError(null)
       const initData = window.Telegram.WebApp.initData
 
+      console.log('initData present:', !!initData)
+      console.log('initData length:', initData?.length || 0)
+      console.log('initData preview:', initData?.substring(0, 100) + '...')
+
       if (!initData) {
         throw new Error('Telegram initialization data not available')
       }
-
-      console.log('Attempting Telegram authentication with initData:', initData.substring(0, 50) + '...')
 
       const response = await fetch('/api/auth/validate', {
         method: 'POST',
@@ -78,6 +80,7 @@ export default function LoginPage() {
       })
 
       console.log('Auth response status:', response.status)
+      console.log('Auth response ok:', response.ok)
 
       if (!response.ok) {
         const data = await response.json()

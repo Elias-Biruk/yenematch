@@ -10,26 +10,34 @@ export async function POST(request: NextRequest) {
     
     const validatedData = telegramAuthSchema.parse(body)
     
+    console.log('Received auth request')
+    console.log('initData present:', !!validatedData.initData)
+    console.log('initData length:', validatedData.initData?.length || 0)
+    
     const botToken = process.env.TELEGRAM_BOT_TOKEN
+    console.log('TELEGRAM_BOT_TOKEN configured:', !!botToken)
+    
     if (!botToken) {
       console.error('TELEGRAM_BOT_TOKEN not configured')
       throw new ValidationError('Telegram bot token not configured')
     }
 
-    console.log('Starting Telegram authentication...')
+    console.log('Starting Telegram validation...')
 
     const authResult = await authenticateWithTelegram(
       validatedData.initData,
       botToken
     )
 
-    console.log('Authentication successful for user:', authResult.user.telegramId)
+    console.log('Validation successful for telegramId:', authResult.user.telegramId)
 
     await createSession({
       userId: authResult.user.id,
       telegramId: authResult.user.telegramId,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     })
+
+    console.log('Session created successfully')
 
     return NextResponse.json({
       user: authResult.user,
