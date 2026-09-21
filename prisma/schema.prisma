@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ModerationStatus {
+  ACTIVE
+  UNDER_REVIEW
+  SUSPENDED
+  BANNED
+  DELETED
+}
+
+enum ReportReason {
+  FAKE_PROFILE
+  HARASSMENT
+  SPAM_SCAM
+  SEXUAL_CONTENT
+  HATE_OR_DISCRIMINATION
+  UNDERAGE_CONCERN
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+enum MatchStatus {
+  ACTIVE
+  UNMATCHED
+  BLOCKED
+}
+
+enum ModerationAction {
+  USER_SUSPENDED
+  USER_UNSUSPENDED
+  USER_BANNED
+  USER_UNBANNED
+  REPORT_REVIEWING
+  REPORT_REVIEWED
+  REPORT_DISMISSED
+  REPORT_RESOLVED
+  ADMIN_ROLE_GRANTED
+  ADMIN_ROLE_REVOKED
+}
+
+model User {
+  id                String            @id @default(cuid())
+  telegramId        String            @unique
+  firstName         String
+  lastName          String?
+  username          String?
+  role              UserRole          @default(USER)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  profile           Profile?
+  sentLikes         Like[]            @relation("SentLikes")
+  receivedLikes     Like[]            @relation("ReceivedLikes")
+  sentPasses        Pass[]            @relation("SentPasses")
+  receivedPasses    Pass[]            @relation("ReceivedPasses")
+  matches1          Match[]           @relation("User1Matches")
+  matches2          Match[]           @relation("User2Matches")
+  sentMessages      Message[]         @relation("SentMessages")
+  receivedMessages  Message[]         @relation("ReceivedMessages")
+  sentReports       Report[]          @relation("SentReports")
+  receivedReports   Report[]          @relation("ReceivedReports")
+  blockedUsers      Block[]           @relation("Blocker")
+  blockedBy         Block[]           @relation("Blocked")
+  auditLogs         AuditLog[]        @relation("AdminAuditLogs")
+  auditLogsBy       AuditLog[]        @relation("TargetAuditLogs")
+
+  @@index([telegramId])
+  @@index([createdAt])
+  @@index([role])
+}
+
+model Profile {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  age               Int
+  gender            Gender
+  city              String
+  bio               String?
+  photos            Photo[]
+  interests         Interest[]
+  preferences       Preference?
+  moderationStatus  ModerationStatus  @default(ACTIVE)
+  completedOnboarding Boolean          @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([gender])
+  @@index([city])
+  @@index([moderationStatus])
+}
+
+model Photo {
+  id                String   @id @default(cuid())
+  profileId         String
+  profile           Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  url               String
+  cloudinaryPublicId String?
+  order             Int
+  isPrimary         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  @@index([profileId])
+}
+
+model Interest {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  createdAt   DateTime @default(now())
+  
+  @@index([profileId])
+  @@unique([profileId, name])
+}
+
+model Like {
+  id          String   @id @default(cuid())
+  likerId     String
+  liker       User     @relation("SentLikes", fields: [likerId], references: [id], onDelete: Cascade)
+  likedId     String
+  liked       User     @relation("ReceivedLikes", fields: [likedId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  
+  @@unique([likerId, likedId])
+  @@index([likerId])
+  @@index([likedId])
+}
+
+model Pass {
+  id          String   @id @default(cuid())
+  passerId    String
+  passer      User     @relation("SentPasses", fields: [passerId], references: [id], onDelete: Cascade)
+  passedId    String
+  passed      User     @relation("ReceivedPasses", fields: [passedId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  
+  @@unique([passerId, passedId])
+  @@index([passerId])
+  @@index([passedId])
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  user1Id     String
+  user1       User        @relation("User1Matches", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id     String
+  user2       User        @relation("User2Matches", fields: [user2Id], references: [id], onDelete: Cascade)
+  status      MatchStatus @default(ACTIVE)
+  messages    Message[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([status])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  matchId     String
+  match       Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content     String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  @@index([matchId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([readAt])
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  reporter    User         @relation("SentReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedId  String
+  reported    User         @relation("ReceivedReports", fields: [reportedId], references: [id], onDelete: Cascade)
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([reporterId])
+  @@index([reportedId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Block {
+  blockerId   String
+  blockedId   String
+  blocker     User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked     User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  
+  @@id([blockerId, blockedId])
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+enum RelationshipIntention {
+  SERIOUS_RELATIONSHIP
+  MARRIAGE
+  LONG_TERM
+  DATING
+  CASUAL_DATING
+  FRIENDSHIP_FIRST
+  NOT_SURE
+}
+
+enum LifestyleChoice {
+  NEVER
+  OCCASIONALLY
+  REGULARLY
+  DOESNT_MATTER
+}
+
+enum ChildrenPreference {
+  HAS_CHILDREN
+  NO_CHILDREN
+  WANTS_CHILDREN
+  DOESNT_WANT_CHILDREN
+  MAYBE_SOMEDAY
+  NOT_SURE
+}
+
+model Preference {
+  id                    String                @id @default(cuid())
+  profileId             String                @unique
+  profile               Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  preferredGender       Gender?
+  minAge                Int                   @default(18)
+  maxAge                Int                   @default(100)
+  preferredCity         String?
+  relationshipIntention RelationshipIntention?
+  openToLongDistance    Boolean               @default(false)
+  smoking               LifestyleChoice?
+  drinking              LifestyleChoice?
+  childrenPreference    ChildrenPreference?
+  languages             String[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@index([profileId])
+}
+
+model AuditLog {
+  id          String            @id @default(cuid())
+  adminId     String
+  admin       User              @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: Cascade)
+  targetId    String?
+  target      User?             @relation("TargetAuditLogs", fields: [targetId], references: [id], onDelete: Cascade)
+  action      ModerationAction
+  reason      String?
+  reportId    String?
+  metadata    String?
+  createdAt   DateTime          @default(now())
+
+  @@index([adminId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+}

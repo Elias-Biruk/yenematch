@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-emerald-500: #006B4F;
+    --color-burgundy-500: #7A1235;
+    --color-gold-500: #C9A227;
+    --color-cream-300: #F7F2E8;
+    --color-ink-900: #171717;
+  }
+
+  * {
+    @apply border-ink-200;
+  }
+
+  body {
+    @apply bg-cream-300 text-ink-900;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "env": {
+    "NEXTAUTH_SECRET": {
+      "description": "Secret for session JWT signing (required in production)"
+    },
+    "DATABASE_URL": {
+      "description": "PostgreSQL connection string"
+    },
+    "TELEGRAM_BOT_TOKEN": {
+      "description": "Telegram Bot Token from BotFather"
+    },
+    "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME": {
+      "description": "Telegram Bot username (e.g., @your_bot)"
+    },
+    "NEXT_PUBLIC_APP_URL": {
+      "description": "Production app URL (e.g., https://your-domain.vercel.app)"
+    },
+    "CLOUDINARY_CLOUD_NAME": {
+      "description": "Cloudinary cloud name"
+    },
+    "CLOUDINARY_API_KEY": {
+      "description": "Cloudinary API key"
+    },
+    "CLOUDINARY_API_SECRET": {
+      "description": "Cloudinary API secret"
+    },
+    "DEV_AUTH": {
+      "description": "Development authentication (must be false in production)",
+      "value": "false"
+    }
+  }
+}
