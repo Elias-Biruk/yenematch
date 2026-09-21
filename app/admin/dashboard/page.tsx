@@ -18,6 +18,11 @@ interface DashboardStats {
   activeMatches: number
   maleUsers: number
   femaleUsers: number
+  newUsers: number
+  newMatches: number
+  onboardingCompleted: number
+  onboardingIncomplete: number
+  timeRange: string
 }
 
 export default function AdminDashboard() {
@@ -25,11 +30,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all')
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch('/api/admin/dashboard')
+        setLoading(true)
+        const response = await fetch(`/api/admin/dashboard?timeRange=${timeRange}`)
         if (!response.ok) {
           throw new Error(t('errorLoadingStats'))
         }
@@ -43,7 +50,7 @@ export default function AdminDashboard() {
     }
 
     fetchStats()
-  }, [])
+  }, [timeRange, t])
 
   if (loading) {
     return (
@@ -85,6 +92,12 @@ export default function AdminDashboard() {
       color: 'bg-gray-500',
     },
     {
+      title: `New Users (${stats.timeRange})`,
+      value: stats.newUsers,
+      icon: Users,
+      color: 'bg-green-500',
+    },
+    {
       title: 'Male Users',
       value: stats.maleUsers,
       icon: Users,
@@ -98,9 +111,15 @@ export default function AdminDashboard() {
     },
     {
       title: t('completedProfiles'),
-      value: stats.completedProfiles,
+      value: stats.onboardingCompleted,
       icon: CheckCircle,
       color: 'bg-green-500',
+    },
+    {
+      title: 'Incomplete Onboarding',
+      value: stats.onboardingIncomplete,
+      icon: AlertTriangle,
+      color: 'bg-yellow-500',
     },
     {
       title: t('activeUsers'),
@@ -144,11 +163,32 @@ export default function AdminDashboard() {
       icon: MessageSquare,
       color: 'bg-pink-500',
     },
+    {
+      title: `New Matches (${stats.timeRange})`,
+      value: stats.newMatches,
+      icon: MessageSquare,
+      color: 'bg-green-600',
+    },
   ]
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('dashboardOverview')}</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">{t('dashboardOverview')}</h2>
+        
+        <div className="flex items-center space-x-2">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as 'today' | 'week' | 'month' | 'all')}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+          </select>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {statCards.map((card) => {

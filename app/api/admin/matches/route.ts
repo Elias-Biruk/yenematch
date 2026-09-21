@@ -4,13 +4,11 @@ import { handleError } from '@/lib/utils/errors'
 import { prisma } from '@/lib/db/prisma'
 import { z } from 'zod'
 
-const auditQuerySchema = z.object({
-  action: z.string().optional(),
-  targetId: z.string().optional(),
-  adminId: z.string().optional(),
+const matchesQuerySchema = z.object({
+  status: z.enum(['ACTIVE', 'UNMATCHED', 'BLOCKED', 'ALL']).optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
-  sortBy: z.enum(['createdAt', 'action']).optional(),
+  sortBy: z.enum(['createdAt', 'status']).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 
@@ -20,24 +18,16 @@ export async function GET(request: NextRequest) {
     
     const { searchParams } = new URL(request.url)
     const query = Object.fromEntries(searchParams.entries())
-    const validatedQuery = auditQuerySchema.parse(query)
+    const validatedQuery = matchesQuerySchema.parse(query)
     
     const page = parseInt(validatedQuery.page || '1')
-    const limit = parseInt(validatedQuery.limit || '50')
+    const limit = parseInt(validatedQuery.limit || '20')
     const skip = (page - 1) * limit
     
     const whereClause: any = {}
     
-    if (validatedQuery.action) {
-      whereClause.action = validatedQuery.action
-    }
-    
-    if (validatedQuery.targetId) {
-      whereClause.targetId = validatedQuery.targetId
-    }
-    
-    if (validatedQuery.adminId) {
-      whereClause.adminId = validatedQuery.adminId
+    if (validatedQuery.status && validatedQuery.status !== 'ALL') {
+      whereClause.status = validatedQuery.status
     }
     
     // Sorting
@@ -46,26 +36,49 @@ export async function GET(request: NextRequest) {
     const sortOrder = validatedQuery.sortOrder || 'desc'
     orderBy[sortBy] = sortOrder
     
-    const [auditLogs, total] = await Promise.all([
-      prisma.auditLog.findMany({
+    const [matches, total] = await Promise.all([
+      prisma.match.findMany({
         where: whereClause,
         include: {
-          admin: {
+          user1: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               username: true,
               role: true,
+              profile: {
+                select: {
+                  id: true,
+                  age: true,
+                  gender: true,
+                  city: true,
+                  moderationStatus: true,
+                },
+              },
             },
           },
-          target: {
+          user2: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               username: true,
               role: true,
+              profile: {
+                select: {
+                  id: true,
+                  age: true,
+                  gender: true,
+                  city: true,
+                  moderationStatus: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              messages: true,
             },
           },
         },
@@ -73,11 +86,11 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      prisma.auditLog.count({ where: whereClause }),
+      prisma.match.count({ where: whereClause }),
     ])
     
     return NextResponse.json({
-      auditLogs,
+      matches,
       pagination: {
         page,
         limit,

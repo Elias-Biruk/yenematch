@@ -5,11 +5,14 @@ import { Search, Shield, Ban, CheckCircle, AlertTriangle, Eye } from 'lucide-rea
 
 interface User {
   id: string
+  telegramId: string
   firstName: string
   lastName: string | null
   username: string | null
   role: string
   createdAt: string
+  updatedAt: string
+  isSeed: boolean
   profile: {
     id: string
     age: number
@@ -17,6 +20,7 @@ interface User {
     city: string
     moderationStatus: string
     completedOnboarding: boolean
+    createdAt: string
   } | null
 }
 
@@ -36,6 +40,11 @@ export default function AdminUsers() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('ALL')
+  const [gender, setGender] = useState('ALL')
+  const [userType, setUserType] = useState('ALL')
+  const [role, setRole] = useState('ALL')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState('desc')
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({
     page: 1,
@@ -54,6 +63,11 @@ export default function AdminUsers() {
         
         if (search) params.append('search', search)
         if (status !== 'ALL') params.append('status', status)
+        if (gender !== 'ALL') params.append('gender', gender)
+        if (userType !== 'ALL') params.append('userType', userType)
+        if (role !== 'ALL') params.append('role', role)
+        if (sortBy !== 'createdAt') params.append('sortBy', sortBy)
+        if (sortOrder !== 'desc') params.append('sortOrder', sortOrder)
 
         const response = await fetch(`/api/admin/users?${params}`)
         if (!response.ok) {
@@ -70,10 +84,21 @@ export default function AdminUsers() {
     }
 
     fetchUsers()
-  }, [page, search, status])
+  }, [page, search, status, gender, userType, role, sortBy, sortOrder])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    setPage(1)
+  }
+
+  const resetFilters = () => {
+    setSearch('')
+    setStatus('ALL')
+    setGender('ALL')
+    setUserType('ALL')
+    setRole('ALL')
+    setSortBy('createdAt')
+    setSortOrder('desc')
     setPage(1)
   }
 
@@ -125,35 +150,93 @@ export default function AdminUsers() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search users..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+        <form onSubmit={handleSearch} className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="BANNED">Banned</option>
+            </select>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Genders</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <select
+              value={userType}
+              onChange={(e) => setUserType(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Users</option>
+              <option value="REAL">Real Users</option>
+              <option value="SEED">Seed Users</option>
+            </select>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="ALL">All Roles</option>
+              <option value="USER">User</option>
+              <option value="ADMIN">Admin</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+            </select>
           </div>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="ALL">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="BANNED">Banned</option>
-          </select>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Search
-          </button>
+          <div className="flex flex-col md:flex-row gap-4">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="createdAt">Sort by Date</option>
+              <option value="firstName">Sort by Name</option>
+              <option value="age">Sort by Age</option>
+              <option value="city">Sort by City</option>
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Search
+            </button>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Reset
+            </button>
+          </div>
         </form>
       </div>
 
@@ -167,6 +250,9 @@ export default function AdminUsers() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Profile
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -188,22 +274,34 @@ export default function AdminUsers() {
               return (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.firstName} {user.lastName || ''}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {user.username || 'No username'}
-                      </div>
+                    <div className="text-sm text-gray-900">
+                      {user.firstName} {user.lastName || ''}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {user.username || 'No username'}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {user.telegramId}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.profile ? (
                       <div className="text-sm text-gray-900">
-                        {user.profile.age} yrs • {user.profile.city}
+                        {user.profile.age} yrs • {user.profile.gender} • {user.profile.city}
                       </div>
                     ) : (
                       <div className="text-sm text-gray-500">No profile</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {user.isSeed ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Seed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Real
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

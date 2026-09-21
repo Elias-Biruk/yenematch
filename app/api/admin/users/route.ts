@@ -9,8 +9,13 @@ const usersQuerySchema = z.object({
   status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED', 'ALL']).optional(),
   onboarding: z.enum(['COMPLETED', 'NOT_COMPLETED', 'ALL']).optional(),
   city: z.string().optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'ALL']).optional(),
+  userType: z.enum(['REAL', 'SEED', 'ALL']).optional(),
+  role: z.enum(['USER', 'ADMIN', 'SUPER_ADMIN', 'ALL']).optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
+  sortBy: z.enum(['createdAt', 'firstName', 'age', 'city']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -25,8 +30,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(validatedQuery.limit || '20')
     const skip = (page - 1) * limit
     
+    const SEED_USERNAME_PREFIX = 'seed_user_'
+    const TELEGRAM_ID_OFFSET = 900000000
+    const TELEGRAM_ID_OFFSET_STR = String(TELEGRAM_ID_OFFSET)
+    
     const whereClause: any = {}
     
+    // Search filter
     if (validatedQuery.search) {
       whereClause.OR = [
         { firstName: { contains: validatedQuery.search, mode: 'insensitive' } },
@@ -35,12 +45,15 @@ export async function GET(request: NextRequest) {
       ]
     }
     
+    // Status filter
     if (validatedQuery.status && validatedQuery.status !== 'ALL') {
-      whereClause.profile = {
-        moderationStatus: validatedQuery.status,
+      if (!whereClause.profile) {
+        whereClause.profile = {}
       }
+      whereClause.profile.moderationStatus = validatedQuery.status
     }
     
+    // Onboarding filter
     if (validatedQuery.onboarding && validatedQuery.onboarding !== 'ALL') {
       if (!whereClause.profile) {
         whereClause.profile = {}
@@ -48,6 +61,7 @@ export async function GET(request: NextRequest) {
       whereClause.profile.completedOnboarding = validatedQuery.onboarding === 'COMPLETED'
     }
     
+    // City filter
     if (validatedQuery.city) {
       if (!whereClause.profile) {
         whereClause.profile = {}
@@ -55,16 +69,59 @@ export async function GET(request: NextRequest) {
       whereClause.profile.city = { contains: validatedQuery.city, mode: 'insensitive' }
     }
     
+    // Gender filter
+    if (validatedQuery.gender && validatedQuery.gender !== 'ALL') {
+      if (!whereClause.profile) {
+        whereClause.profile = {}
+      }
+      whereClause.profile.gender = validatedQuery.gender
+    }
+    
+    // User type filter (seed vs real)
+    if (validatedQuery.userType && validatedQuery.userType !== 'ALL') {
+      if (validatedQuery.userType === 'SEED') {
+        whereClause.OR = [
+          { username: { startsWith: SEED_USERNAME_PREFIX } },
+          { telegramId: { gte: TELEGRAM_ID_OFFSET_STR } },
+        ]
+      } else if (validatedQuery.userType === 'REAL') {
+        whereClause.AND = [
+          { username: { not: { startsWith: SEED_USERNAME_PREFIX } } },
+          { telegramId: { lt: TELEGRAM_ID_OFFSET_STR } },
+        ]
+      }
+    }
+    
+    // Role filter
+    if (validatedQuery.role && validatedQuery.role !== 'ALL') {
+      whereClause.role = validatedQuery.role
+    }
+    
+    // Sorting
+    const orderBy: any = {}
+    const sortBy = validatedQuery.sortBy || 'createdAt'
+    const sortOrder = validatedQuery.sortOrder || 'desc'
+    
+    if (sortBy === 'age') {
+      orderBy.profile = { age: sortOrder }
+    } else if (sortBy === 'city') {
+      orderBy.profile = { city: sortOrder }
+    } else {
+      orderBy[sortBy] = sortOrder
+    }
+    
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where: whereClause,
         select: {
           id: true,
+          telegramId: true,
           firstName: true,
           lastName: true,
           username: true,
           role: true,
           createdAt: true,
+          updatedAt: true,
           profile: {
             select: {
               id: true,
@@ -77,15 +134,22 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),
       prisma.user.count({ where: whereClause }),
     ])
     
+    // Add seed detection flag to each user
+    const usersWithSeedFlag = users.map(user => ({
+      ...user,
+      isSeed: user.username?.startsWith(SEED_USERNAME_PREFIX) || 
+              parseInt(user.telegramId) >= TELEGRAM_ID_OFFSET
+    }))
+    
     return NextResponse.json({
-      users,
+      users: usersWithSeedFlag,
       pagination: {
         page,
         limit,

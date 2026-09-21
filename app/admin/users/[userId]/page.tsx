@@ -6,12 +6,28 @@ import { ArrowLeft, Shield, Ban, CheckCircle, AlertTriangle, User as UserIcon, M
 
 interface UserDetail {
   id: string
+  telegramId: string
   firstName: string
   lastName: string | null
   username: string | null
   role: string
   createdAt: string
   updatedAt: string
+  isSeed: boolean
+  _count: {
+    sentLikes: number
+    receivedLikes: number
+    sentPasses: number
+    receivedPasses: number
+    matches1: number
+    matches2: number
+    sentMessages: number
+    receivedMessages: number
+    sentReports: number
+    receivedReports: number
+    blockedUsers: number
+    blockedBy: number
+  }
   profile: {
     id: string
     age: number
@@ -21,6 +37,7 @@ interface UserDetail {
     moderationStatus: string
     completedOnboarding: boolean
     createdAt: string
+    updatedAt: string
     photos: Array<{
       id: string
       url: string
@@ -188,6 +205,16 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
                 <p className="font-medium text-gray-900">{user.role}</p>
               </div>
               <div>
+                <p className="text-gray-500">User Type</p>
+                <p className="font-medium text-gray-900">
+                  {user.isSeed ? 'Seed User' : 'Real User'}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500">Telegram ID</p>
+                <p className="font-medium text-gray-900">{user.telegramId}</p>
+              </div>
+              <div>
                 <p className="text-gray-500">Joined</p>
                 <p className="font-medium text-gray-900">
                   {new Date(user.createdAt).toLocaleDateString()}
@@ -276,6 +303,57 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
               )}
             </>
           )}
+
+          {/* Activity Statistics */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Statistics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500">Likes Sent</p>
+                <p className="font-medium text-gray-900">{user._count.sentLikes}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Likes Received</p>
+                <p className="font-medium text-gray-900">{user._count.receivedLikes}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Passes Sent</p>
+                <p className="font-medium text-gray-900">{user._count.sentPasses}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Passes Received</p>
+                <p className="font-medium text-gray-900">{user._count.receivedPasses}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Matches</p>
+                <p className="font-medium text-gray-900">{user._count.matches1 + user._count.matches2}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Messages Sent</p>
+                <p className="font-medium text-gray-900">{user._count.sentMessages}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Messages Received</p>
+                <p className="font-medium text-gray-900">{user._count.receivedMessages}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Reports Filed</p>
+                <p className="font-medium text-gray-900">{user._count.sentReports}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Reports Against</p>
+                <p className="font-medium text-gray-900">{user._count.receivedReports}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Users Blocked</p>
+                <p className="font-medium text-gray-900">{user._count.blockedUsers}</p>
+              </div>
+              <div>
+                <p className="text-gray-500">Blocked By</p>
+                <p className="font-medium text-gray-900">{user._count.blockedBy}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Moderation Actions */}

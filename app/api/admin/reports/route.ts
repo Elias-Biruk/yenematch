@@ -6,8 +6,11 @@ import { z } from 'zod'
 
 const reportsQuerySchema = z.object({
   status: z.enum(['PENDING', 'REVIEWING', 'REVIEWED', 'RESOLVED', 'DISMISSED', 'ALL']).optional(),
+  reason: z.enum(['FAKE_PROFILE', 'HARASSMENT', 'SPAM_SCAM', 'SEXUAL_CONTENT', 'HATE_OR_DISCRIMINATION', 'UNDERAGE_CONCERN', 'OTHER', 'ALL']).optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
+  sortBy: z.enum(['createdAt', 'reason', 'status']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -28,6 +31,16 @@ export async function GET(request: NextRequest) {
       whereClause.status = validatedQuery.status
     }
     
+    if (validatedQuery.reason && validatedQuery.reason !== 'ALL') {
+      whereClause.reason = validatedQuery.reason
+    }
+    
+    // Sorting
+    const orderBy: any = {}
+    const sortBy = validatedQuery.sortBy || 'createdAt'
+    const sortOrder = validatedQuery.sortOrder || 'desc'
+    orderBy[sortBy] = sortOrder
+    
     const [reports, total] = await Promise.all([
       prisma.report.findMany({
         where: whereClause,
@@ -36,22 +49,36 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               firstName: true,
+              lastName: true,
+              username: true,
+              role: true,
+              profile: {
+                select: {
+                  moderationStatus: true,
+                },
+              },
             },
           },
           reported: {
             select: {
               id: true,
               firstName: true,
+              lastName: true,
+              username: true,
+              role: true,
               profile: {
                 select: {
                   id: true,
+                  age: true,
+                  gender: true,
+                  city: true,
                   moderationStatus: true,
                 },
               },
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

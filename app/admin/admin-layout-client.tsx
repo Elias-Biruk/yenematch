@@ -3,7 +3,7 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, AlertTriangle, Shield } from 'lucide-react'
+import { LayoutDashboard, Users, AlertTriangle, Shield, Heart } from 'lucide-react'
 
 export default function AdminLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -12,6 +12,7 @@ export default function AdminLayoutClient({ children }: { children: ReactNode })
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/reports', label: 'Reports', icon: AlertTriangle },
+    { href: '/admin/matches', label: 'Matches', icon: Heart },
     { href: '/admin/audit', label: 'Audit Log', icon: Shield },
   ]
 

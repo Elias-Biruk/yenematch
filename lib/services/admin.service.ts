@@ -63,10 +63,24 @@ export async function createAuditLog(params: {
   })
 }
 
-export async function getDashboardStats() {
+export async function getDashboardStats(timeRange: 'today' | 'week' | 'month' | 'all' = 'all') {
   const SEED_USERNAME_PREFIX = 'seed_user_'
   const TELEGRAM_ID_OFFSET = 900000000
   const TELEGRAM_ID_OFFSET_STR = String(TELEGRAM_ID_OFFSET)
+  
+  // Calculate date range
+  const now = new Date()
+  let startDate: Date | undefined
+  
+  if (timeRange === 'today') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  } else if (timeRange === 'week') {
+    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  } else if (timeRange === 'month') {
+    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  }
+  
+  const dateFilter = startDate ? { gte: startDate } : undefined
   
   const [
     totalUsers,
@@ -82,6 +96,10 @@ export async function getDashboardStats() {
     activeMatches,
     maleUsers,
     femaleUsers,
+    newUsers,
+    newMatches,
+    onboardingCompleted,
+    onboardingIncomplete,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({
@@ -110,6 +128,18 @@ export async function getDashboardStats() {
     prisma.match.count({ where: { status: 'ACTIVE' } }),
     prisma.profile.count({ where: { gender: 'MALE' } }),
     prisma.profile.count({ where: { gender: 'FEMALE' } }),
+    prisma.user.count({
+      where: {
+        createdAt: dateFilter,
+      },
+    }),
+    prisma.match.count({
+      where: {
+        createdAt: dateFilter,
+      },
+    }),
+    prisma.profile.count({ where: { completedOnboarding: true } }),
+    prisma.profile.count({ where: { completedOnboarding: false } }),
   ])
 
   return {
@@ -126,5 +156,10 @@ export async function getDashboardStats() {
     activeMatches,
     maleUsers,
     femaleUsers,
+    newUsers,
+    newMatches,
+    onboardingCompleted,
+    onboardingIncomplete,
+    timeRange,
   }
 }

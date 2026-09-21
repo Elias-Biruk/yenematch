@@ -7,7 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     const session = await requireAdmin(request)
     
-    const stats = await getDashboardStats()
+    const { searchParams } = new URL(request.url)
+    const timeRange = (searchParams.get('timeRange') as 'today' | 'week' | 'month' | 'all') || 'all'
+    
+    const stats = await getDashboardStats(timeRange)
     
     return NextResponse.json(stats)
   } catch (error) {

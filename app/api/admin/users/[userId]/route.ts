@@ -22,6 +22,7 @@ export async function GET(
       where: { id: userId },
       select: {
         id: true,
+        telegramId: true,
         firstName: true,
         lastName: true,
         username: true,
@@ -71,6 +72,22 @@ export async function GET(
             },
           },
         },
+        _count: {
+          select: {
+            sentLikes: true,
+            receivedLikes: true,
+            sentPasses: true,
+            receivedPasses: true,
+            matches1: true,
+            matches2: true,
+            sentMessages: true,
+            receivedMessages: true,
+            sentReports: true,
+            receivedReports: true,
+            blockedUsers: true,
+            blockedBy: true,
+          },
+        },
       },
     })
     
@@ -81,7 +98,13 @@ export async function GET(
       )
     }
     
-    return NextResponse.json(user)
+    // Add seed detection
+    const SEED_USERNAME_PREFIX = 'seed_user_'
+    const TELEGRAM_ID_OFFSET = 900000000
+    const isSeed = user.username?.startsWith(SEED_USERNAME_PREFIX) || 
+                   parseInt(user.telegramId) >= TELEGRAM_ID_OFFSET
+    
+    return NextResponse.json({ ...user, isSeed })
   } catch (error) {
     const { message, statusCode } = handleError(error)
     return NextResponse.json(

@@ -11,12 +11,19 @@ interface AuditLog {
   admin: {
     id: string
     firstName: string
+    lastName: string | null
+    username: string | null
+    role: string
   }
   target: {
     id: string
     firstName: string
+    lastName: string | null
+    username: string | null
+    role: string
   } | null
   reportId: string | null
+  metadata: string | null
 }
 
 interface AuditResponse {
@@ -214,15 +221,19 @@ export default function AdminAudit() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {log.admin.firstName}
+                      {log.admin.firstName} {log.admin.lastName || ''}
                     </div>
-                    <div className="text-xs text-gray-500">{log.admin.id}</div>
+                    <div className="text-xs text-gray-500">{log.admin.username || 'No username'}</div>
+                    <div className="text-xs text-gray-400">{log.admin.role}</div>
+                    <div className="text-xs text-gray-400">{log.admin.id}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {log.target ? (
                       <div>
-                        <div className="text-sm text-gray-900">{log.target.firstName}</div>
-                        <div className="text-xs text-gray-500">{log.target.id}</div>
+                        <div className="text-sm text-gray-900">{log.target.firstName} {log.target.lastName || ''}</div>
+                        <div className="text-xs text-gray-500">{log.target.username || 'No username'}</div>
+                        <div className="text-xs text-gray-400">{log.target.role}</div>
+                        <div className="text-xs text-gray-400">{log.target.id}</div>
                       </div>
                     ) : (
                       <span className="text-sm text-gray-500">N/A</span>

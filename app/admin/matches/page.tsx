@@ -1,25 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Eye, Shield, CheckCircle, XCircle } from 'lucide-react'
+import { Heart, MessageSquare, AlertTriangle, Search, Filter } from 'lucide-react'
 
-interface Report {
+interface Match {
   id: string
-  reason: string
-  description: string | null
   status: string
   createdAt: string
-  reporter: {
-    id: string
-    firstName: string
-    lastName: string | null
-    username: string | null
-    role: string
-    profile: {
-      moderationStatus: string
-    } | null
-  }
-  reported: {
+  user1: {
     id: string
     firstName: string
     lastName: string | null
@@ -33,10 +21,27 @@ interface Report {
       moderationStatus: string
     } | null
   }
+  user2: {
+    id: string
+    firstName: string
+    lastName: string | null
+    username: string | null
+    role: string
+    profile: {
+      id: string
+      age: number
+      gender: string
+      city: string
+      moderationStatus: string
+    } | null
+  }
+  _count: {
+    messages: number
+  }
 }
 
-interface ReportsResponse {
-  reports: Report[]
+interface MatchesResponse {
+  matches: Match[]
   pagination: {
     page: number
     limit: number
@@ -45,12 +50,11 @@ interface ReportsResponse {
   }
 }
 
-export default function AdminReports() {
-  const [reports, setReports] = useState<Report[]>([])
+export default function AdminMatches() {
+  const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState('ALL')
-  const [reason, setReason] = useState('ALL')
   const [sortBy, setSortBy] = useState('createdAt')
   const [sortOrder, setSortOrder] = useState('desc')
   const [page, setPage] = useState(1)
@@ -62,7 +66,7 @@ export default function AdminReports() {
   })
 
   useEffect(() => {
-    async function fetchReports() {
+    async function fetchMatches() {
       try {
         const params = new URLSearchParams({
           page: page.toString(),
@@ -70,16 +74,15 @@ export default function AdminReports() {
         })
         
         if (status !== 'ALL') params.append('status', status)
-        if (reason !== 'ALL') params.append('reason', reason)
         if (sortBy !== 'createdAt') params.append('sortBy', sortBy)
         if (sortOrder !== 'desc') params.append('sortOrder', sortOrder)
 
-        const response = await fetch(`/api/admin/reports?${params}`)
+        const response = await fetch(`/api/admin/matches?${params}`)
         if (!response.ok) {
-          throw new Error('Failed to fetch reports')
+          throw new Error('Failed to fetch matches')
         }
-        const data: ReportsResponse = await response.json()
-        setReports(data.reports)
+        const data: MatchesResponse = await response.json()
+        setMatches(data.matches)
         setPagination(data.pagination)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -88,12 +91,11 @@ export default function AdminReports() {
       }
     }
 
-    fetchReports()
-  }, [page, status, reason, sortBy, sortOrder])
+    fetchMatches()
+  }, [page, status, sortBy, sortOrder])
 
   const resetFilters = () => {
     setStatus('ALL')
-    setReason('ALL')
     setSortBy('createdAt')
     setSortOrder('desc')
     setPage(1)
@@ -101,46 +103,21 @@ export default function AdminReports() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return 'bg-orange-100 text-orange-800'
-      case 'REVIEWING':
-        return 'bg-blue-100 text-blue-800'
-      case 'REVIEWED':
-        return 'bg-purple-100 text-purple-800'
-      case 'RESOLVED':
+      case 'ACTIVE':
         return 'bg-green-100 text-green-800'
-      case 'DISMISSED':
+      case 'UNMATCHED':
         return 'bg-gray-100 text-gray-800'
+      case 'BLOCKED':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getReasonLabel = (reason: string) => {
-    switch (reason) {
-      case 'FAKE_PROFILE':
-        return 'Fake Profile'
-      case 'HARASSMENT':
-        return 'Harassment'
-      case 'SPAM_SCAM':
-        return 'Spam/Scam'
-      case 'SEXUAL_CONTENT':
-        return 'Sexual Content'
-      case 'HATE_OR_DISCRIMINATION':
-        return 'Hate/Discrimination'
-      case 'UNDERAGE_CONCERN':
-        return 'Underage Concern'
-      case 'OTHER':
-        return 'Other'
-      default:
-        return reason
     }
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">Loading reports...</div>
+        <div className="text-gray-600">Loading matches...</div>
       </div>
     )
   }
@@ -155,11 +132,11 @@ export default function AdminReports() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Report Management</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Match Administration</h2>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Filter by Status
@@ -170,30 +147,9 @@ export default function AdminReports() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="ALL">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="REVIEWING">Reviewing</option>
-              <option value="REVIEWED">Reviewed</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="DISMISSED">Dismissed</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Reason
-            </label>
-            <select
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="ALL">All Reasons</option>
-              <option value="FAKE_PROFILE">Fake Profile</option>
-              <option value="HARASSMENT">Harassment</option>
-              <option value="SPAM_SCAM">Spam/Scam</option>
-              <option value="SEXUAL_CONTENT">Sexual Content</option>
-              <option value="HATE_OR_DISCRIMINATION">Hate/Discrimination</option>
-              <option value="UNDERAGE_CONCERN">Underage Concern</option>
-              <option value="OTHER">Other</option>
+              <option value="ACTIVE">Active</option>
+              <option value="UNMATCHED">Unmatched</option>
+              <option value="BLOCKED">Blocked</option>
             </select>
           </div>
           <div>
@@ -206,7 +162,6 @@ export default function AdminReports() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="createdAt">Date</option>
-              <option value="reason">Reason</option>
               <option value="status">Status</option>
             </select>
           </div>
@@ -234,101 +189,85 @@ export default function AdminReports() {
         </div>
       </div>
 
-      {/* Reports Table */}
+      {/* Matches Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Reporter
+                User 1
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Reported User
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
+                User 2
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
+                Messages
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {reports.map((report) => (
-              <tr key={report.id} className="hover:bg-gray-50">
+            {matches.map((match) => (
+              <tr key={match.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {report.reporter.firstName} {report.reporter.lastName || ''}
+                    {match.user1.firstName} {match.user1.lastName || ''}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {report.reporter.username || 'No username'}
+                    {match.user1.username || 'No username'}
                   </div>
+                  {match.user1.profile && (
+                    <div className="text-xs text-gray-400">
+                      {match.user1.profile.age} yrs • {match.user1.profile.gender} • {match.user1.profile.city}
+                    </div>
+                  )}
                   <div className="text-xs text-gray-400">
-                    {report.reporter.role}
+                    {match.user1.role}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {report.reported.firstName} {report.reported.lastName || ''}
+                    {match.user2.firstName} {match.user2.lastName || ''}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {report.reported.username || 'No username'}
+                    {match.user2.username || 'No username'}
                   </div>
-                  {report.reported.profile && (
+                  {match.user2.profile && (
                     <div className="text-xs text-gray-400">
-                      {report.reported.profile.age} yrs • {report.reported.profile.gender} • {report.reported.profile.city}
+                      {match.user2.profile.age} yrs • {match.user2.profile.gender} • {match.user2.profile.city}
                     </div>
                   )}
-                  {report.reported.profile && (
-                    <div className="text-xs text-gray-400">
-                      Status: {report.reported.profile.moderationStatus}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900">
-                    {getReasonLabel(report.reason)}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 max-w-xs truncate">
-                    {report.description || 'No description'}
+                  <div className="text-xs text-gray-400">
+                    {match.user2.role}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                    {report.status}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(match.status)}`}>
+                    {match.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    {match._count.messages}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(report.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a
-                    href={`/admin/reports/${report.id}`}
-                    className="text-blue-600 hover:text-blue-900 inline-flex items-center"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    Review
-                  </a>
+                  {new Date(match.createdAt).toLocaleDateString()}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {reports.length === 0 && (
+        {matches.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No reports found</p>
+            <p className="text-gray-500">No matches found</p>
           </div>
         )}
       </div>
@@ -339,7 +278,7 @@ export default function AdminReports() {
           <div className="text-sm text-gray-700">
             Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
             {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-            {pagination.total} reports
+            {pagination.total} matches
           </div>
           <div className="flex space-x-2">
             <button
@@ -359,6 +298,22 @@ export default function AdminReports() {
           </div>
         </div>
       )}
+
+      {/* Info Box */}
+      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <AlertTriangle className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-1">About Match Administration</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>View all matches between users in the system</li>
+              <li>Filter by match status (active, unmatched, blocked)</li>
+              <li>See message counts for each match</li>
+              <li>Monitor user connection patterns and activity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
