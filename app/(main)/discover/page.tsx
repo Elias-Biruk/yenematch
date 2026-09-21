@@ -104,6 +104,10 @@ export default function DiscoverPage() {
     await fetchProfiles()
   }
 
+  const handleViewProfile = (userId: string) => {
+    router.push(`/profiles/${userId}`)
+  }
+
   const handleLike = async (userId: string) => {
     setActionLoading(true)
     try {
@@ -222,6 +226,7 @@ export default function DiscoverPage() {
               profile={profiles[currentIndex]}
               onLike={handleLike}
               onPass={handlePass}
+              onViewProfile={handleViewProfile}
               onReport={(userId, userName) => {
                 setReportModalUser({ userId, userName })
               }}

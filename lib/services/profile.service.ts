@@ -99,6 +99,17 @@ export async function getProfile(userId: string) {
 }
 
 export async function updateProfile(userId: string, data: UpdateProfileInput) {
+  // Update user name if provided
+  if (data.firstName || data.lastName) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.firstName && { firstName: data.firstName }),
+        ...(data.lastName !== undefined && { lastName: data.lastName }),
+      },
+    })
+  }
+
   const profile = await prisma.profile.update({
     where: { userId },
     data: {
@@ -113,6 +124,13 @@ export async function updateProfile(userId: string, data: UpdateProfileInput) {
       },
       interests: true,
       preferences: true,
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
     },
   })
 

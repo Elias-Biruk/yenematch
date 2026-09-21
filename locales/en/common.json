@@ -347,6 +347,7 @@
     "keepDiscovering": "Keep Discovering"
   },
   "profileCard": {
+    "viewProfile": "View Profile",
     "moreInterests": "+{count} more",
     "reportUser": "Report {name}"
   },

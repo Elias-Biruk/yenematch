@@ -347,6 +347,7 @@
     "keepDiscovering": "መገኝት ይቀጥሩ"
   },
   "profileCard": {
+    "viewProfile": "ፕሮፋይል ይመለክቡ",
     "moreInterests": "+{count} ተበል",
     "reportUser": "{name} ሪፖርት አድርግ"
   },

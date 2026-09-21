@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Heart, X, ChevronLeft, ChevronRight, Flag, MapPin } from 'lucide-react'
+import { Heart, X, ChevronLeft, ChevronRight, Flag, MapPin, Eye, Sparkles } from 'lucide-react'
 import { ReportModal } from '@/components/report/report-modal'
 import { useTranslations } from 'next-intl'
 
@@ -25,11 +25,12 @@ interface ProfileCardProps {
   }
   onLike: (userId: string) => void
   onPass: (userId: string) => void
+  onViewProfile?: (userId: string) => void
   onReport?: (userId: string, userName: string) => void
   loading?: boolean
 }
 
-export function ProfileCard({ profile, onLike, onPass, onReport, loading }: ProfileCardProps) {
+export function ProfileCard({ profile, onLike, onPass, onViewProfile, onReport, loading }: ProfileCardProps) {
   const t = useTranslations('profileCard')
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [showReportModal, setShowReportModal] = useState(false)
@@ -52,7 +53,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
   return (
     <Card className="overflow-hidden shadow-premium-lg border-0 animate-scale-in">
       <CardContent className="p-0">
-        {/* Photo */}
+        {/* Photo Section */}
         <div className="relative aspect-[3/4] bg-cream-200">
           {currentPhoto ? (
             <img
@@ -91,7 +92,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
               </button>
               
               {/* Photo Indicators */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                 {photos.map((_, index) => (
                   <div
                     key={index}
@@ -103,51 +104,65 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
               </div>
             </>
           )}
-
-          {/* Gradient overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
         </div>
 
-        {/* Info - Overlay on photo */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
-          <div className="space-y-3">
+        {/* Profile Info Section */}
+        <div className="p-5 bg-white space-y-4">
+          {/* Name and Location */}
+          <div>
+            <h2 className="text-display-sm text-ink-900 font-bold">
+              {profile.user.firstName}, {profile.age}
+            </h2>
+            <p className="text-body text-ink-600 flex items-center mt-1">
+              <MapPin className="w-4 h-4 mr-1.5" />
+              {profile.city}
+            </p>
+          </div>
+
+          {/* Bio */}
+          {profile.bio && (
             <div>
-              <h2 className="text-display-sm text-white font-bold">
-                {profile.user.firstName}, {profile.age}
-              </h2>
-              <p className="text-white/90 flex items-center text-sm font-medium">
-                <MapPin className="w-4 h-4 mr-1" />
-                {profile.city}
-              </p>
+              <p className="text-body text-ink-700 leading-relaxed line-clamp-3">{profile.bio}</p>
             </div>
+          )}
 
-            {profile.bio && (
-              <p className="text-white/80 text-sm line-clamp-2 leading-relaxed">{profile.bio}</p>
-            )}
-
-            {profile.interests.length > 0 && (
+          {/* Interests */}
+          {profile.interests.length > 0 && (
+            <div>
               <div className="flex flex-wrap gap-2">
-                {profile.interests.slice(0, 4).map((interest) => (
+                {profile.interests.slice(0, 6).map((interest) => (
                   <span
                     key={interest.id}
-                    className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium border border-white/30"
+                    className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium border border-emerald-200"
                   >
+                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                     {interest.name}
                   </span>
                 ))}
-                {profile.interests.length > 4 && (
-                  <span className="text-xs text-white/70 font-medium">
-                    +{profile.interests.length - 4}
+                {profile.interests.length > 6 && (
+                  <span className="text-sm text-ink-500 font-medium">
+                    +{profile.interests.length - 6}
                   </span>
                 )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
 
-        {/* Actions */}
-        <div className="p-4 bg-white">
-          <div className="flex items-center justify-center space-x-4">
+          {/* View Profile Button */}
+          {onViewProfile && (
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+              onClick={() => onViewProfile(profile.userId)}
+              disabled={loading}
+            >
+              <Eye className="w-5 h-5 mr-2" />
+              {t('viewProfile')}
+            </Button>
+          )}
+
+          {/* Like/Pass Actions */}
+          <div className="flex items-center justify-center space-x-4 pt-2">
             <Button
               variant="outline"
               className="flex-1 h-16 border-2 border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700 rounded-full shadow-sm"
@@ -171,7 +186,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
           {onReport && (
             <button
               onClick={() => setShowReportModal(true)}
-              className="w-full mt-4 text-sm text-ink-500 hover:text-burgundy-600 flex items-center justify-center gap-1.5 transition-colors py-2"
+              className="w-full text-sm text-ink-500 hover:text-burgundy-600 flex items-center justify-center gap-1.5 transition-colors py-2"
               disabled={loading}
             >
               <Flag className="h-4 w-4" />
