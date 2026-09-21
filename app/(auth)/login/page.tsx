@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [isTelegramReady, setIsTelegramReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isOutsideTelegram, setIsOutsideTelegram] = useState(false)
+  const [detectedTelegram, setDetectedTelegram] = useState(false)
 
   useEffect(() => {
     checkDevAuthStatus()
@@ -35,6 +36,7 @@ export default function LoginPage() {
         if (window.Telegram?.WebApp) {
           clearInterval(checkInterval)
           foundTelegram = true
+          setDetectedTelegram(true)
           setIsTelegramReady(true)
           window.Telegram.WebApp.ready()
           window.Telegram.WebApp.expand()
@@ -100,7 +102,7 @@ export default function LoginPage() {
       console.error('Telegram authentication error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Login failed'
       setError(errorMessage)
-      setIsOutsideTelegram(true) // Show button on error so user can retry
+      // Don't set isOutsideTelegram on error - we're still in Telegram
     } finally {
       setLoading(false)
     }
@@ -160,14 +162,14 @@ export default function LoginPage() {
             </p>
 
             {/* Auto-authenticating in Telegram */}
-            {loading && !isOutsideTelegram && (
+            {loading && detectedTelegram && (
               <div className="text-center py-4">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
                 <p className="text-sm text-ink-600 mt-2">Authenticating with Telegram...</p>
               </div>
             )}
 
-            {/* Manual Telegram Login (shown when not in Telegram or on error) */}
+            {/* Manual Telegram Login (only shown when not in Telegram) */}
             {!loading && isOutsideTelegram && (
               <>
                 <Button
@@ -183,6 +185,18 @@ export default function LoginPage() {
                   Open this app through Telegram for authentication
                 </p>
               </>
+            )}
+
+            {/* Retry button when in Telegram but auth failed */}
+            {!loading && detectedTelegram && error && (
+              <Button
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                size="lg"
+                onClick={handleTelegramLogin}
+                disabled={loading}
+              >
+                {loading ? 'Authenticating...' : 'Retry Authentication'}
+              </Button>
             )}
 
             {/* Error display */}
