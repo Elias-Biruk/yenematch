@@ -11,17 +11,21 @@ const i18nMiddleware = createMiddleware({
 })
 
 export async function middleware(request: NextRequest) {
-  // Apply i18n middleware first
-  const response = i18nMiddleware(request)
-  
   // Skip auth middleware for certain paths
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/api/auth', '/onboarding']
   
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+  // Check if pathname matches public paths (with or without locale prefix)
+  const isPublicPath = publicPaths.some(path => {
+    return pathname === path || 
+           pathname.startsWith(path + '/') ||
+           pathname.match(/^\/[a-z]{2}\/login/) ||
+           pathname.match(/^\/[a-z]{2}\/api\/auth/) ||
+           pathname.match(/^\/[a-z]{2}\/onboarding/)
+  })
   
   if (isPublicPath) {
-    return response
+    return i18nMiddleware(request)
   }
   
   // Check authentication for protected routes
@@ -29,16 +33,16 @@ export async function middleware(request: NextRequest) {
     const session = await getSession()
     if (!session) {
       // Redirect to login if not authenticated
-      const loginUrl = new URL('/login', request.url)
-      return NextResponse.redirect(loginUrl)
+      // Don't apply i18n middleware to redirect - let next request handle it
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   } catch (error) {
     console.error('Auth middleware error:', error)
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
   
-  return response
+  // Apply i18n middleware for authenticated users
+  return i18nMiddleware(request)
 }
 
 export const config = {
