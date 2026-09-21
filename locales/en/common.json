@@ -220,7 +220,19 @@
     "logout": "Logout",
     "language": "Language",
     "editProfile": "Edit Profile",
-    "editPreferences": "Edit Preferences"
+    "editPreferences": "Edit Preferences",
+    "loadingSettings": "Loading settings...",
+    "settings": "Settings",
+    "adminPanel": "Admin Panel",
+    "goToAdminPanel": "Go to Admin Panel",
+    "dangerZone": "Danger Zone",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "logoutFailed": "Failed to logout",
+    "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
+    "deleteAccountFailed": "Failed to delete account",
+    "failedToFetchBlockedUsers": "Failed to fetch blocked users",
+    "confirmUnblock": "Are you sure you want to unblock this user?",
+    "failedToUnblock": "Failed to unblock user"
   },
   "account": {
     "deleteAccountConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
@@ -440,15 +452,5 @@
     "childrenPreference": "Children Preference",
     "children": "Children",
     "languages": "Languages"
-  },
-  "validation": {
-    "ageRange": "Age must be between {min} and {max}",
-    "minAgeLessThanMax": "Minimum age must be less than or equal to maximum age"
-  },
-  "common": {
-    "loading": "Loading...",
-    "saving": "Saving...",
-    "save": "Save",
-    "error": "Error"
   }
 }

@@ -220,7 +220,19 @@
     "logout": "Baasuu",
     "language": "Afaan",
     "editProfile": "Profile deebisu",
-    "editPreferences": "Miseensota deebisu"
+    "editPreferences": "Miseensota deebisu",
+    "loadingSettings": "Qophii fe'uu...",
+    "settings": "Qophii",
+    "adminPanel": "Panelii admin",
+    "goToAdminPanel": "Panelii admin galchaa",
+    "dangerZone": "Qabxii bal'inaa",
+    "logoutConfirm": "Baasuuf sirrii dhagahamaa?",
+    "logoutFailed": "Baasuu hin danda'anne",
+    "deleteAccountConfirm": "Sirnaa haachuuf sirrii dhagahamaa? Kun dogoggorri malee deebi'uu danda'a.",
+    "deleteAccountFailed": "Sirnaa haasuu hin danda'anne",
+    "failedToFetchBlockedUsers": "Ummataa cimsaa argachuu hin danda'anne",
+    "confirmUnblock": "Kun ummatii cimsuu sirrii dhagahamaa?",
+    "failedToUnblock": "Cima balleessuu hin danda'anne"
   },
   "account": {
     "deleteAccountConfirm": "Sirnaa haachuuf sirrii dhagahamaa?",
@@ -440,15 +452,5 @@
     "childrenPreference": "Ilmaan fayyadhaa",
     "children": "Ilmaan",
     "languages": "Afaanota"
-  },
-  "validation": {
-    "ageRange": "Umrii gidhaa {min} fi {max}",
-    "minAgeLessThanMax": "Umrii jalqabaa umrii cimaa irra"
-  },
-  "common": {
-    "loading": "Barbachisuu jiruu...",
-    "saving": "Gefachuu jiruu...",
-    "save": "Gefachi",
-    "error": "Dogoggora"
   }
 }

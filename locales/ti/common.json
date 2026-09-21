@@ -220,7 +220,19 @@
     "logout": "ውጣ",
     "language": "ቋንቋ",
     "editProfile": "መገልህህ አርትዝ",
-    "editPreferences": "ምርጫችዎን አርትዝ"
+    "editPreferences": "ምርጫችዎን አርትዝ",
+    "loadingSettings": "ቅርጫት በመጫን ላይ...",
+    "settings": "ቅርጫት",
+    "adminPanel": "የአስተዳዳሪ ክፍል",
+    "goToAdminPanel": "ወደ አስተዳዳሪ ክፍል ሂድ",
+    "dangerZone": "አደጋ ዘር",
+    "logoutConfirm": "ለመውጣት እርግጠኛ ነዎት?",
+    "logoutFailed": "መውጣት አልተቻም",
+    "deleteAccountConfirm": "መለልህህዎን እንዲፍ ሰርዝ ይፈለግዎን?",
+    "deleteAccountFailed": "መለልህህ ማስወገድ አልተቻም",
+    "failedToFetchBlockedUsers": "የተከለሉ ተጠቀማት ማግኘት አልተቻም",
+    "confirmUnblock": "ይህን ተጠቀማ ለመክፈት እርግጠኛ ነዎት?",
+    "failedToUnblock": "መክፈት አልተቻም"
   },
   "account": {
     "deleteAccountConfirm": "መለልህህዎን እንዲፍ ሰርዝ ይፈለግዎን?",
@@ -440,15 +452,5 @@
     "childrenPreference": "የልጆች ምርጫ",
     "children": "ልጆች",
     "languages": "ቋንቋት"
-  },
-  "validation": {
-    "ageRange": "ዕድር ከ {min} እና {max} መካከል ነው",
-    "minAgeLessThanMax": "አነስተኛ ዕድር ከፍተኛ ዕድር እና ነው መካከል አለው"
-  },
-  "common": {
-    "loading": "በመልመልል ላይ...",
-    "saving": "በማክ...",
-    "save": "አማክ",
-    "error": "ስህት"
   }
 }

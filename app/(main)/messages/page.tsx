@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error'
 import { EmptyState } from '@/components/ui/empty'
 import { BottomNav } from '@/components/layout/bottom-nav'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, Heart } from 'lucide-react'
 
 interface Conversation {
   id: string
@@ -68,9 +68,24 @@ export default function MessagesPage() {
     router.push(`/messages/${matchId}`)
   }
 
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'now'
+    if (diffMins < 60) return `${diffMins}m`
+    if (diffHours < 24) return `${diffHours}h`
+    if (diffDays < 7) return `${diffDays}d`
+    return date.toLocaleDateString()
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <LoadingState message={t('loadingConversations')} />
       </div>
     )
@@ -78,7 +93,7 @@ export default function MessagesPage() {
 
   if (error && conversations.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <ErrorState
           message={error}
           onRetry={fetchConversations}
@@ -91,15 +106,15 @@ export default function MessagesPage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">{t('messages')}</h1>
+        <div className="bg-white px-4 py-4 border-b border-cream-400 safe-top">
+          <h1 className="text-h2 text-ink-900">{t('messages')}</h1>
         </div>
 
         {/* Conversations List */}
         <div className="p-4 space-y-3">
           {conversations.length === 0 ? (
             <EmptyState
-              icon="💬"
+              icon={<MessageCircle className="w-16 h-16 text-ink-400 mx-auto" />}
               title={t('noMessages')}
               description={t('sayHello')}
               action={
@@ -119,43 +134,48 @@ export default function MessagesPage() {
               return (
                 <Card 
                   key={conversation.id}
-                  className="cursor-pointer hover:bg-cream-100 transition-colors"
+                  className="cursor-pointer hover:shadow-md transition-all duration-200 active:scale-[0.98]"
                   onClick={() => handleMessage(conversation.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-4">
-                      {primaryPhoto ? (
-                        <Avatar
-                          src={primaryPhoto.url}
-                          alt={conversation.otherUser.firstName}
-                          fallback={conversation.otherUser.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      ) : (
-                        <Avatar
-                          fallback={conversation.otherUser.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      )}
+                      <div className="relative">
+                        {primaryPhoto ? (
+                          <Avatar
+                            src={primaryPhoto.url}
+                            alt={conversation.otherUser.firstName}
+                            fallback={conversation.otherUser.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        ) : (
+                          <Avatar
+                            fallback={conversation.otherUser.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        )}
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <Heart className="w-3 h-3 text-white fill-white" />
+                        </div>
+                      </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-ink-900">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-h3 text-ink-900">
                             {conversation.otherUser.firstName}, {conversation.otherUser.profile.age}
                           </h3>
                           {lastMessage && (
-                            <span className="text-xs text-ink-500">
-                              {new Date(lastMessage.createdAt).toLocaleDateString()}
+                            <span className="text-caption text-ink-500 font-medium">
+                              {formatMessageTime(lastMessage.createdAt)}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-ink-700">{conversation.otherUser.profile.city}</p>
-                        <p className="text-sm text-ink-500 mt-1 truncate">
+                        <p className="text-body-sm text-ink-600 mb-1">{conversation.otherUser.profile.city}</p>
+                        <p className="text-body-sm text-ink-500 truncate">
                           {messagePreview}
                         </p>
                       </div>
 
-                      <MessageCircle className="h-5 w-5 text-emerald-500" />
+                      <MessageCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                     </div>
                   </CardContent>
                 </Card>

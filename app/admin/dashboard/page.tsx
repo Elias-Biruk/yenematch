@@ -1,244 +1,182 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Shield, Users, AlertTriangle, CheckCircle, MessageSquare, Activity } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Users, Heart, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
 
-interface DashboardStats {
+interface Stats {
   totalUsers: number
-  seedUsers: number
-  realUsers: number
-  completedProfiles: number
   activeUsers: number
-  suspendedUsers: number
-  bannedUsers: number
+  totalMatches: number
   pendingReports: number
-  reviewingReports: number
-  reviewedReports: number
-  activeMatches: number
-  maleUsers: number
-  femaleUsers: number
-  newUsers: number
-  newMatches: number
-  onboardingCompleted: number
-  onboardingIncomplete: number
-  timeRange: string
+  newUsersToday: number
+  newMatchesToday: number
 }
 
 export default function AdminDashboard() {
-  const t = useTranslations('adminDashboard')
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month' | 'all'>('all')
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        setLoading(true)
-        const response = await fetch(`/api/admin/dashboard?timeRange=${timeRange}`)
-        if (!response.ok) {
-          throw new Error(t('errorLoadingStats'))
-        }
-        const data = await response.json()
-        setStats(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('error'))
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchStats()
-  }, [timeRange, t])
+  }, [timeRange])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-gray-600">{t('loadingDashboard')}</div>
-      </div>
-    )
+  const fetchStats = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/admin/stats?timeRange=${timeRange}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats')
+      }
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Failed to fetch stats:', error)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-red-600">{t('error')}: {error}</div>
-      </div>
-    )
-  }
-
-  if (!stats) {
-    return null
-  }
-
-  const statCards = [
-    {
-      title: t('totalUsers'),
-      value: stats.totalUsers,
-      icon: Users,
-      color: 'bg-blue-500',
-    },
-    {
-      title: 'Real Users',
-      value: stats.realUsers,
-      icon: Users,
-      color: 'bg-indigo-500',
-    },
-    {
-      title: 'Seed Users',
-      value: stats.seedUsers,
-      icon: Users,
-      color: 'bg-gray-500',
-    },
-    {
-      title: `New Users (${stats.timeRange})`,
-      value: stats.newUsers,
-      icon: Users,
-      color: 'bg-green-500',
-    },
-    {
-      title: 'Male Users',
-      value: stats.maleUsers,
-      icon: Users,
-      color: 'bg-blue-600',
-    },
-    {
-      title: 'Female Users',
-      value: stats.femaleUsers,
-      icon: Users,
-      color: 'bg-pink-500',
-    },
-    {
-      title: t('completedProfiles'),
-      value: stats.onboardingCompleted,
-      icon: CheckCircle,
-      color: 'bg-green-500',
-    },
-    {
-      title: 'Incomplete Onboarding',
-      value: stats.onboardingIncomplete,
-      icon: AlertTriangle,
-      color: 'bg-yellow-500',
-    },
-    {
-      title: t('activeUsers'),
-      value: stats.activeUsers,
-      icon: Activity,
-      color: 'bg-emerald-500',
-    },
-    {
-      title: t('suspendedUsers'),
-      value: stats.suspendedUsers,
-      icon: Shield,
-      color: 'bg-yellow-500',
-    },
-    {
-      title: t('bannedUsers'),
-      value: stats.bannedUsers,
-      icon: AlertTriangle,
-      color: 'bg-red-500',
-    },
-    {
-      title: t('pendingReports'),
-      value: stats.pendingReports,
-      icon: AlertTriangle,
-      color: 'bg-orange-500',
-    },
-    {
-      title: t('reviewingReports'),
-      value: stats.reviewingReports,
-      icon: Shield,
-      color: 'bg-purple-500',
-    },
-    {
-      title: t('reviewedReports'),
-      value: stats.reviewedReports,
-      icon: CheckCircle,
-      color: 'bg-cyan-500',
-    },
-    {
-      title: t('activeMatches'),
-      value: stats.activeMatches,
-      icon: MessageSquare,
-      color: 'bg-pink-500',
-    },
-    {
-      title: `New Matches (${stats.timeRange})`,
-      value: stats.newMatches,
-      icon: MessageSquare,
-      color: 'bg-green-600',
-    },
-  ]
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">{t('dashboardOverview')}</h2>
-        
-        <div className="flex items-center space-x-2">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as 'today' | 'week' | 'month' | 'all')}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
-          </select>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-display-sm text-ink-900">Dashboard Overview</h2>
+        <p className="text-body text-ink-600">Monitor your platform's performance</p>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {statCards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div
-              key={card.title}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
-                </div>
-                <div className={`${card.color} p-3 rounded-full`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </div>
-          )
-        })}
+
+      {/* Time Range Selector */}
+      <div className="mb-6 flex space-x-2">
+        {(['24h', '7d', '30d'] as const).map((range) => (
+          <Button
+            key={range}
+            variant={timeRange === range ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setTimeRange(range)}
+          >
+            {range === '24h' ? 'Last 24 Hours' : range === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
+          </Button>
+        ))}
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">Total Users</CardTitle>
+            <Users className="h-5 w-5 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-emerald-600 font-bold">{stats?.totalUsers || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">Active Users</CardTitle>
+            <Activity className="h-5 w-5 text-gold-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-gold-600 font-bold">{stats?.activeUsers || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">Total Matches</CardTitle>
+            <Heart className="h-5 w-5 text-burgundy-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-burgundy-600 font-bold">{stats?.totalMatches || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">Pending Reports</CardTitle>
+            <AlertTriangle className="h-5 w-5 text-burgundy-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-burgundy-600 font-bold">{stats?.pendingReports || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">New Users Today</CardTitle>
+            <TrendingUp className="h-5 w-5 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-emerald-600 font-bold">{stats?.newUsersToday || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-premium">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-body-sm font-medium text-ink-600">New Matches Today</CardTitle>
+            <Heart className="h-5 w-5 text-burgundy-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-10 bg-cream-200 rounded-lg animate-pulse" />
+            ) : (
+              <div className="text-display text-burgundy-600 font-bold">{stats?.newMatchesToday || 0}</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('quickActions')}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/admin/users"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Users className="w-5 h-5 text-gray-600 mr-3" />
-            <span className="text-gray-900 font-medium">{t('manageUsers')}</span>
-          </a>
-          <a
-            href="/admin/reports"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <AlertTriangle className="w-5 h-5 text-gray-600 mr-3" />
-            <span className="text-gray-900 font-medium">{t('reviewReports')}</span>
-          </a>
-          <a
-            href="/admin/audit"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Shield className="w-5 h-5 text-gray-600 mr-3" />
-            <span className="text-gray-900 font-medium">{t('viewAuditLog')}</span>
-          </a>
-        </div>
-      </div>
+      <Card className="shadow-premium">
+        <CardHeader>
+          <CardTitle className="text-h2">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Button variant="outline" className="h-12 text-base">
+              <Users className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">Manage Users</span>
+              <span className="sm:hidden">Users</span>
+            </Button>
+            <Button variant="outline" className="h-12 text-base">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">Review Reports</span>
+              <span className="sm:hidden">Reports</span>
+            </Button>
+            <Button variant="outline" className="h-12 text-base">
+              <Heart className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">View Matches</span>
+              <span className="sm:hidden">Matches</span>
+            </Button>
+            <Button variant="outline" className="h-12 text-base">
+              <Activity className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">View Activity</span>
+              <span className="sm:hidden">Activity</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

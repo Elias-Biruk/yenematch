@@ -203,7 +203,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-300 p-4">
+    <div className="min-h-screen bg-cream-300 p-4 safe-top safe-bottom">
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-center mb-6">
           <Logo size="lg" />
@@ -212,41 +212,41 @@ export default function OnboardingPage() {
         {/* Progress Indicator */}
         {step !== 'complete' && (
           <div className="mb-6">
-            <div className="flex items-center justify-between text-sm text-ink-500 mb-2">
+            <div className="flex items-center justify-between text-body-sm text-ink-500 mb-2">
               <span>{t('stepOf')} {stepNumber} of 5</span>
-              <span>{Math.round((stepNumber / 5) * 100)}%</span>
+              <span className="font-medium">{Math.round((stepNumber / 5) * 100)}%</span>
             </div>
             <div className="h-2 bg-cream-400 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-emerald-500 transition-all duration-300"
+                className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
                 style={{ width: `${(stepNumber / 5) * 100}%` }}
               />
             </div>
           </div>
         )}
 
-        <Card>
+        <Card className="shadow-premium-lg">
           <CardContent className="p-6">
             {step === 'age' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('welcomeToApp', { appName: tApp('name') })}</h1>
-                  <p className="text-ink-700">{t('confirmAge')}</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">{t('welcomeToApp', { appName: tApp('name') })}</h1>
+                  <p className="text-body text-ink-700">{t('confirmAge')}</p>
                 </div>
                 
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label className="flex items-start space-x-3 cursor-pointer p-4 bg-cream-50 rounded-xl hover:bg-cream-100 transition-colors">
                   <Checkbox
                     checked={formData.ageConfirmed}
                     onChange={(e) => setFormData({ ...formData, ageConfirmed: e.target.checked })}
                   />
-                  <span className="text-sm text-ink-700">
+                  <span className="text-body text-ink-700">
                     {t('confirmAge18')}
                   </span>
                 </label>
 
-                {error && <p className="text-sm text-burgundy-500">{error}</p>}
+                {error && <p className="text-body-sm text-burgundy-600 bg-burgundy-50 p-3 rounded-xl">{error}</p>}
 
-                <Button onClick={handleNext} className="w-full" disabled={!formData.ageConfirmed}>
+                <Button onClick={handleNext} className="w-full h-12 text-base" disabled={!formData.ageConfirmed}>
                   {tCommon('next')}
                 </Button>
               </div>
@@ -255,14 +255,14 @@ export default function OnboardingPage() {
             {step === 'basic' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('tellUsAboutYou')}</h1>
-                  <p className="text-ink-700">{t('basicInfo')}</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">{t('tellUsAboutYou')}</h1>
+                  <p className="text-body text-ink-700">{t('basicInfo')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('firstName')}</label>
+                      <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('firstName')}</label>
                       <Input
                         type="text"
                         value={formData.firstName}
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('lastName')}</label>
+                      <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('lastName')}</label>
                       <Input
                         type="text"
                         value={formData.lastName}
@@ -282,7 +282,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourAge')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('yourAge')}</label>
                     <Input
                       type="number"
                       min={MIN_AGE}
@@ -294,7 +294,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourGender')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('yourGender')}</label>
                     <Select
                       value={formData.gender}
                       onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
@@ -307,7 +307,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourCity')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('yourCity')}</label>
                     <Input
                       type="text"
                       value={formData.city}
@@ -317,13 +317,13 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {error && <p className="text-sm text-burgundy-500">{error}</p>}
+                {error && <p className="text-body-sm text-burgundy-600 bg-burgundy-50 p-3 rounded-xl">{error}</p>}
 
                 <div className="flex space-x-3">
-                  <Button onClick={handleBack} variant="outline" className="flex-1">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 text-base">
                     {tCommon('back')}
                   </Button>
-                  <Button onClick={handleNext} className="flex-1">
+                  <Button onClick={handleNext} className="flex-1 h-12 text-base">
                     {tCommon('next')}
                   </Button>
                 </div>
@@ -333,13 +333,13 @@ export default function OnboardingPage() {
             {step === 'preferences' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('yourPreferences')}</h1>
-                  <p className="text-ink-700">{t('whoYouWantToMeet')}</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">{t('yourPreferences')}</h1>
+                  <p className="text-body text-ink-700">{t('whoYouWantToMeet')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('preferredGender')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('preferredGender')}</label>
                     <Select
                       value={formData.preferredGender}
                       onChange={(e) => setFormData({ ...formData, preferredGender: e.target.value })}
@@ -353,7 +353,7 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('minAge')}</label>
+                      <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('minAge')}</label>
                       <Input
                         type="number"
                         min={MIN_AGE}
@@ -363,7 +363,7 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('maxAge')}</label>
+                      <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('maxAge')}</label>
                       <Input
                         type="number"
                         min={MIN_AGE}
@@ -375,7 +375,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('preferredCityOptional')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('preferredCityOptional')}</label>
                     <Input
                       type="text"
                       value={formData.preferredCity}
@@ -385,7 +385,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('lookingFor')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('lookingFor')}</label>
                     <Select
                       value={formData.relationshipIntention}
                       onChange={(e) => setFormData({ ...formData, relationshipIntention: e.target.value })}
@@ -401,16 +401,16 @@ export default function OnboardingPage() {
                     </Select>
                   </div>
 
-                  <label className="flex items-center space-x-3 cursor-pointer">
+                  <label className="flex items-center space-x-3 cursor-pointer p-4 bg-cream-50 rounded-xl hover:bg-cream-100 transition-colors">
                     <Checkbox
                       checked={formData.openToLongDistance}
                       onChange={(e) => setFormData({ ...formData, openToLongDistance: e.target.checked })}
                     />
-                    <span className="text-sm text-ink-700">{t('openToLongDistance')}</span>
+                    <span className="text-body text-ink-700">{t('openToLongDistance')}</span>
                   </label>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('smokingPreference')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('smokingPreference')}</label>
                     <Select
                       value={formData.smoking}
                       onChange={(e) => setFormData({ ...formData, smoking: e.target.value })}
@@ -424,7 +424,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('drinkingPreference')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('drinkingPreference')}</label>
                     <Select
                       value={formData.drinking}
                       onChange={(e) => setFormData({ ...formData, drinking: e.target.value })}
@@ -438,7 +438,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('childrenPreference')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('childrenPreference')}</label>
                     <Select
                       value={formData.childrenPreference}
                       onChange={(e) => setFormData({ ...formData, childrenPreference: e.target.value })}
@@ -454,7 +454,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('languagesOptional')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('languagesOptional')}</label>
                     <Input
                       type="text"
                       value={formData.languages.join(', ')}
@@ -464,13 +464,13 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {error && <p className="text-sm text-burgundy-500">{error}</p>}
+                {error && <p className="text-body-sm text-burgundy-600 bg-burgundy-50 p-3 rounded-xl">{error}</p>}
 
                 <div className="flex space-x-3">
-                  <Button onClick={handleBack} variant="outline" className="flex-1">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 text-base">
                     {tCommon('back')}
                   </Button>
-                  <Button onClick={handleNext} className="flex-1">
+                  <Button onClick={handleNext} className="flex-1 h-12 text-base">
                     {tCommon('next')}
                   </Button>
                 </div>
@@ -480,13 +480,13 @@ export default function OnboardingPage() {
             {step === 'photos' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('addPhotos')}</h1>
-                  <p className="text-ink-700">{t('addPhotoUrls')}</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">{t('addPhotos')}</h1>
+                  <p className="text-body text-ink-700">{t('addPhotoUrls')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('bioOptional')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('bioOptional')}</label>
                     <Textarea
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
@@ -494,11 +494,11 @@ export default function OnboardingPage() {
                       rows={3}
                       maxLength={500}
                     />
-                    <p className="text-xs text-ink-500 mt-1">{formData.bio.length}/500</p>
+                    <p className="text-caption text-ink-500 mt-1">{formData.bio.length}/500</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('interestsOptional')}</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">{t('interestsOptional')}</label>
                     <div className="flex space-x-2">
                       <Input
                         type="text"
@@ -512,16 +512,16 @@ export default function OnboardingPage() {
                       </Button>
                     </div>
                     {formData.interests.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {formData.interests.map((interest) => (
                           <span
                             key={interest}
-                            className="inline-flex items-center px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs"
+                            className="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200"
                           >
                             {interest}
                             <button
                               onClick={() => removeInterest(interest)}
-                              className="ml-1 text-emerald-500 hover:text-emerald-700"
+                              className="ml-2 text-emerald-500 hover:text-emerald-700 font-medium"
                             >
                               ×
                             </button>
@@ -532,7 +532,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Photo URLs (optional)</label>
+                    <label className="block text-body-sm font-medium text-ink-900 mb-2">Photo URLs (optional)</label>
                     <div className="flex space-x-2">
                       <Input
                         type="url"
@@ -546,13 +546,13 @@ export default function OnboardingPage() {
                       </Button>
                     </div>
                     {formData.photos.length > 0 && (
-                      <div className="space-y-2 mt-2">
+                      <div className="space-y-2 mt-3">
                         {formData.photos.map((photo, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-cream-100 rounded text-sm">
+                          <div key={index} className="flex items-center justify-between p-3 bg-cream-100 rounded-xl text-body-sm">
                             <span className="truncate text-ink-700">{photo}</span>
                             <button
                               onClick={() => removePhoto(index)}
-                              className="text-burgundy-500 hover:text-burgundy-700 ml-2"
+                              className="text-burgundy-600 hover:text-burgundy-700 ml-2 font-medium"
                             >
                               {tCommon('remove')}
                             </button>
@@ -563,15 +563,15 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <p className="text-xs text-ink-500">{t('devPhotoNote')}</p>
+                <p className="text-caption text-ink-500 bg-cream-50 p-3 rounded-xl">{t('devPhotoNote')}</p>
 
-                {error && <p className="text-sm text-burgundy-500">{error}</p>}
+                {error && <p className="text-body-sm text-burgundy-600 bg-burgundy-50 p-3 rounded-xl">{error}</p>}
 
                 <div className="flex space-x-3">
-                  <Button onClick={handleBack} variant="outline" className="flex-1">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 text-base">
                     {tCommon('back')}
                   </Button>
-                  <Button onClick={handleNext} className="flex-1">
+                  <Button onClick={handleNext} className="flex-1 h-12 text-base">
                     {tCommon('next')}
                   </Button>
                 </div>
@@ -581,12 +581,12 @@ export default function OnboardingPage() {
             {step === 'review' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Review your profile</h1>
-                  <p className="text-ink-700">Check your information before submitting.</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">Review your profile</h1>
+                  <p className="text-body text-ink-700">Check your information before submitting.</p>
                 </div>
 
-                <div className="space-y-3 bg-cream-100 p-4 rounded-lg text-sm">
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-3 bg-cream-50 p-5 rounded-2xl text-body-sm">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="font-medium text-ink-900">Name</p>
                       <p className="text-ink-700">{formData.firstName} {formData.lastName}</p>
@@ -652,13 +652,13 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
-                {error && <p className="text-sm text-burgundy-500">{error}</p>}
+                {error && <p className="text-body-sm text-burgundy-600 bg-burgundy-50 p-3 rounded-xl">{error}</p>}
 
                 <div className="flex space-x-3">
-                  <Button onClick={handleBack} variant="outline" className="flex-1">
+                  <Button onClick={handleBack} variant="outline" className="flex-1 h-12 text-base">
                     Back
                   </Button>
-                  <Button onClick={handleNext} className="flex-1" disabled={loading}>
+                  <Button onClick={handleNext} className="flex-1 h-12 text-base" disabled={loading}>
                     {loading ? 'Creating...' : 'Create Profile'}
                   </Button>
                 </div>
@@ -667,10 +667,10 @@ export default function OnboardingPage() {
 
             {step === 'complete' && (
               <div className="space-y-6 text-center">
-                <div className="text-6xl">✓</div>
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500 text-white text-4xl font-bold">✓</div>
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Profile created!</h1>
-                  <p className="text-ink-700">You&apos;re all set to start finding matches.</p>
+                  <h1 className="text-display-sm text-ink-900 mb-2">Profile created!</h1>
+                  <p className="text-body text-ink-700">You're all set to start finding matches.</p>
                 </div>
                 <LoadingState message="Redirecting..." />
               </div>

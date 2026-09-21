@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createLike } from '@/lib/services/matching.service'
+import { createLike, getLikes } from '@/lib/services/matching.service'
 import { requireAuth } from '@/lib/auth/middleware'
 import { handleError } from '@/lib/utils/errors'
 import { rateLimit } from '@/lib/utils/rate-limiter'
 import { likeSchema } from '@/lib/validators/discovery.schema'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await requireAuth(request)
+    
+    const likes = await getLikes(session.userId)
+    
+    return NextResponse.json(likes)
+  } catch (error) {
+    const { message, statusCode } = handleError(error)
+    return NextResponse.json(
+      { error: message },
+      { status: statusCode }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

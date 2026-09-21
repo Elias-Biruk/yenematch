@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Heart, X, ChevronLeft, ChevronRight, Flag } from 'lucide-react'
+import { Heart, X, ChevronLeft, ChevronRight, Flag, MapPin } from 'lucide-react'
 import { ReportModal } from '@/components/report/report-modal'
 import { useTranslations } from 'next-intl'
 
@@ -50,7 +50,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
   }
 
   return (
-    <Card className="overflow-hidden shadow-lg">
+    <Card className="overflow-hidden shadow-premium-lg border-0 animate-scale-in">
       <CardContent className="p-0">
         {/* Photo */}
         <div className="relative aspect-[3/4] bg-cream-200">
@@ -59,12 +59,13 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
               src={currentPhoto.url}
               alt={`${profile.user.firstName} photo ${currentPhotoIndex + 1}`}
               className="w-full h-full object-cover"
+              loading="eager"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-cream-200">
               <Avatar
                 fallback={profile.user.firstName[0]}
-                className="h-32 w-32 text-4xl"
+                className="h-32 w-32 text-4xl bg-emerald-500 text-white"
               />
             </div>
           )}
@@ -74,83 +75,95 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
             <>
               <button
                 onClick={handlePreviousPhoto}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors"
+                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-3 transition-all duration-200 active:scale-95"
                 disabled={loading}
+                aria-label="Previous photo"
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
               <button
                 onClick={handleNextPhoto}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-3 transition-all duration-200 active:scale-95"
                 disabled={loading}
+                aria-label="Next photo"
               >
                 <ChevronRight className="h-6 w-6" />
               </button>
               
               {/* Photo Indicators */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                 {photos.map((_, index) => (
                   <div
                     key={index}
-                    className={`h-1.5 rounded-full transition-all ${
-                      index === currentPhotoIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      index === currentPhotoIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/50'
                     }`}
                   />
                 ))}
               </div>
             </>
           )}
+
+          {/* Gradient overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
         </div>
 
-        {/* Info */}
-        <div className="p-4 space-y-3 bg-white">
-          <div>
-            <h2 className="text-2xl font-bold text-ink-900">
-              {profile.user.firstName}, {profile.age}
-            </h2>
-            <p className="text-ink-700 flex items-center text-sm">
-              {profile.city}
-            </p>
-          </div>
-
-          {profile.bio && (
-            <p className="text-ink-700 text-sm line-clamp-3 leading-relaxed">{profile.bio}</p>
-          )}
-
-          {profile.interests.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.slice(0, 5).map((interest) => (
-                <span
-                  key={interest.id}
-                  className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200"
-                >
-                  {interest.name}
-                </span>
-              ))}
-              {profile.interests.length > 5 && (
-                <span className="text-xs text-ink-500">
-                  {t('moreInterests', { count: profile.interests.length - 5 })}
-                </span>
-              )}
+        {/* Info - Overlay on photo */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+          <div className="space-y-3">
+            <div>
+              <h2 className="text-display-sm text-white font-bold">
+                {profile.user.firstName}, {profile.age}
+              </h2>
+              <p className="text-white/90 flex items-center text-sm font-medium">
+                <MapPin className="w-4 h-4 mr-1" />
+                {profile.city}
+              </p>
             </div>
-          )}
 
-          {/* Actions */}
-          <div className="flex space-x-3 pt-2">
+            {profile.bio && (
+              <p className="text-white/80 text-sm line-clamp-2 leading-relaxed">{profile.bio}</p>
+            )}
+
+            {profile.interests.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {profile.interests.slice(0, 4).map((interest) => (
+                  <span
+                    key={interest.id}
+                    className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium border border-white/30"
+                  >
+                    {interest.name}
+                  </span>
+                ))}
+                {profile.interests.length > 4 && (
+                  <span className="text-xs text-white/70 font-medium">
+                    +{profile.interests.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="p-4 bg-white">
+          <div className="flex items-center justify-center space-x-4">
             <Button
               variant="outline"
-              className="flex-1 h-14 border-2 border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700 rounded-full"
+              className="flex-1 h-16 border-2 border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700 rounded-full shadow-sm"
               onClick={() => onPass(profile.userId)}
               disabled={loading}
+              aria-label="Pass"
             >
-              <X className="h-7 w-7" />
+              <X className="h-8 w-8" />
             </Button>
             <Button
-              className="flex-1 h-14 bg-burgundy-600 hover:bg-burgundy-700 text-white rounded-full"
+              className="flex-1 h-16 bg-burgundy-600 hover:bg-burgundy-700 text-white rounded-full shadow-md hover:shadow-lg transition-shadow"
               onClick={() => onLike(profile.userId)}
               disabled={loading}
+              aria-label="Like"
             >
-              <Heart className="h-7 w-7" />
+              <Heart className="h-8 w-8" />
             </Button>
           </div>
 
@@ -158,7 +171,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
           {onReport && (
             <button
               onClick={() => setShowReportModal(true)}
-              className="w-full mt-3 text-sm text-ink-500 hover:text-ink-700 flex items-center justify-center gap-1 transition-colors"
+              className="w-full mt-4 text-sm text-ink-500 hover:text-burgundy-600 flex items-center justify-center gap-1.5 transition-colors py-2"
               disabled={loading}
             >
               <Flag className="h-4 w-4" />

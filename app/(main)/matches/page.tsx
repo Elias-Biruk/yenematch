@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Avatar } from '@/components/ui/avatar'
@@ -10,12 +10,12 @@ import { LoadingState } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error'
 import { EmptyState } from '@/components/ui/empty'
 import { BottomNav } from '@/components/layout/bottom-nav'
-import { ReportModal } from '@/components/report/report-modal'
-import { MessageCircle, X, Flag } from 'lucide-react'
+import { MessageCircle, Flag, X, Heart } from 'lucide-react'
 
 interface Match {
   id: string
-  createdAt: string
+  user1Id: string
+  user2Id: string
   otherUser: {
     id: string
     firstName: string
@@ -25,11 +25,11 @@ interface Match {
       photos: Array<{ id: string; url: string; isPrimary: boolean }>
     }
   }
-  latestMessage: {
+  createdAt: string
+  lastMessage?: {
     content: string
     createdAt: string
-  } | null
-  unreadCount: number
+  }
 }
 
 export default function MatchesPage() {
@@ -39,15 +39,14 @@ export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [reportModalUser, setReportModalUser] = useState<{ userId: string; userName: string } | null>(null)
 
-  const fetchMatches = useCallback(async () => {
+  const fetchMatches = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/matches')
+      const response = await fetch('/api/messages')
       if (!response.ok) {
         if (response.status === 401) {
-          router.push('/onboarding')
+          router.push('/login')
           return
         }
         throw new Error(t('failedToFetchMatches'))
@@ -59,15 +58,11 @@ export default function MatchesPage() {
     } finally {
       setLoading(false)
     }
-  }, [router, t, tCommon])
+  }
 
   useEffect(() => {
     fetchMatches()
-  }, [fetchMatches])
-
-  const handleMessage = (matchId: string, _userId: string) => {
-    router.push(`/messages/${matchId}`)
-  }
+  }, [])
 
   const handleUnmatch = async (matchId: string) => {
     if (!confirm(t('confirmUnmatch'))) {
@@ -89,9 +84,24 @@ export default function MatchesPage() {
     }
   }
 
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'now'
+    if (diffMins < 60) return `${diffMins}m`
+    if (diffHours < 24) return `${diffHours}h`
+    if (diffDays < 7) return `${diffDays}d`
+    return date.toLocaleDateString()
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <LoadingState message={t('loadingMatches')} />
       </div>
     )
@@ -99,7 +109,7 @@ export default function MatchesPage() {
 
   if (error && matches.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <ErrorState
           message={error}
           onRetry={fetchMatches}
@@ -112,15 +122,15 @@ export default function MatchesPage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">{t('matches')}</h1>
+        <div className="bg-white px-4 py-4 border-b border-cream-400 safe-top">
+          <h1 className="text-h2 text-ink-900">{t('yourMatches')}</h1>
         </div>
 
         {/* Matches List */}
         <div className="p-4 space-y-3">
           {matches.length === 0 ? (
             <EmptyState
-              icon="💕"
+              icon={<Heart className="w-16 h-16 text-ink-400 mx-auto" />}
               title={t('noMatches')}
               description={t('startLiking')}
               action={
@@ -134,66 +144,56 @@ export default function MatchesPage() {
               const primaryPhoto = match.otherUser.profile.photos.find(p => p.isPrimary) || match.otherUser.profile.photos[0]
 
               return (
-                <Card key={match.id}>
+                <Card key={match.id} className="hover:shadow-md transition-all duration-200 active:scale-[0.98]">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-4">
-                      {primaryPhoto ? (
-                        <Avatar
-                          src={primaryPhoto.url}
-                          alt={match.otherUser.firstName}
-                          fallback={match.otherUser.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      ) : (
-                        <Avatar
-                          fallback={match.otherUser.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      )}
+                      <div className="relative">
+                        {primaryPhoto ? (
+                          <Avatar
+                            src={primaryPhoto.url}
+                            alt={match.otherUser.firstName}
+                            fallback={match.otherUser.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        ) : (
+                          <Avatar
+                            fallback={match.otherUser.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        )}
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <Heart className="w-3 h-3 text-white fill-white" />
+                        </div>
+                      </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-ink-900">
-                            {match.otherUser.firstName}, {match.otherUser.profile.age}
-                          </h3>
-                          {match.unreadCount > 0 && (
-                            <div className="bg-burgundy-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                              {match.unreadCount}
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-sm text-ink-700">{match.otherUser.profile.city}</p>
-                        {match.latestMessage ? (
-                          <p className="text-sm text-ink-500 mt-1 truncate">
-                            {match.latestMessage.content}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-ink-500 mt-1">
-                            {t('matchedOn')} {new Date(match.createdAt).toLocaleDateString()}
+                        <h3 className="text-h3 text-ink-900">
+                          {match.otherUser.firstName}, {match.otherUser.profile.age}
+                        </h3>
+                        <p className="text-body-sm text-ink-600">{match.otherUser.profile.city}</p>
+                        {match.lastMessage && (
+                          <p className="text-caption text-ink-500 mt-1 truncate">
+                            {match.lastMessage.content}
                           </p>
                         )}
                       </div>
 
                       <div className="flex space-x-2">
                         <Button
-                          size="sm"
-                          onClick={() => handleMessage(match.id, match.otherUser.id)}
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => router.push(`/messages/${match.id}`)}
+                          className="rounded-full"
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          <MessageCircle className="h-5 w-5" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={() => setReportModalUser({ userId: match.otherUser.id, userName: match.otherUser.firstName })}
-                        >
-                          <Flag className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => handleUnmatch(match.id)}
+                          className="rounded-full text-ink-400 hover:text-burgundy-600"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
@@ -205,19 +205,6 @@ export default function MatchesPage() {
         </div>
       </div>
       <BottomNav />
-      
-      {reportModalUser && (
-        <ReportModal
-          isOpen={!!reportModalUser}
-          onClose={() => setReportModalUser(null)}
-          reportedUserId={reportModalUser.userId}
-          reportedUserName={reportModalUser.userName}
-          onSuccess={() => {
-            setReportModalUser(null)
-            fetchMatches()
-          }}
-        />
-      )}
     </div>
   )
 }

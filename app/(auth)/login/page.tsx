@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Shield, Lock, Sparkles } from 'lucide-react'
 
 export default function LoginPage() {
   const t = useTranslations('auth')
@@ -45,12 +46,10 @@ export default function LoginPage() {
           window.Telegram.WebApp.ready()
           window.Telegram.WebApp.expand()
           
-          // Auto-attempt authentication when in Telegram
           attemptTelegramAuth()
         }
       }, 100)
 
-      // After 5 seconds, if no Telegram found, show button
       setTimeout(() => {
         clearInterval(checkInterval)
         if (!foundTelegram) {
@@ -71,10 +70,6 @@ export default function LoginPage() {
       setError(null)
       const initData = window.Telegram.WebApp.initData
 
-      console.log('initData present:', !!initData)
-      console.log('initData length:', initData?.length || 0)
-      console.log('initData preview:', initData?.substring(0, 100) + '...')
-
       if (!initData) {
         throw new Error('Telegram initialization data not available')
       }
@@ -85,17 +80,12 @@ export default function LoginPage() {
         body: JSON.stringify({ initData }),
       })
 
-      console.log('Auth response status:', response.status)
-      console.log('Auth response ok:', response.ok)
-
       if (!response.ok) {
         const data = await response.json()
-        console.error('Auth error response:', data)
         throw new Error(data.error || t('loginFailed'))
       }
 
       const result = await response.json()
-      console.log('Auth result:', { isNewUser: result.isNewUser, hasUser: !!result.user })
 
       if (result.isNewUser) {
         router.push('/onboarding')
@@ -106,7 +96,6 @@ export default function LoginPage() {
       console.error('Telegram authentication error:', error)
       const errorMessage = error instanceof Error ? error.message : t('loginFailed')
       setError(errorMessage)
-      // Don't set isOutsideTelegram on error - we're still in Telegram
     } finally {
       setLoading(false)
     }
@@ -143,58 +132,72 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-300 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
+      <div className="max-w-md w-full space-y-8 animate-fade-in">
         {/* Branding */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-emerald-500 mb-3">
+        <div className="text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500 shadow-premium-lg mb-4">
+            <Sparkles className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-display text-emerald-500">
             {tApp('name')}
           </h1>
-          <p className="text-ink-700 text-xl">
+          <p className="text-body text-ink-700 max-w-xs mx-auto">
             {tApp('tagline')}
           </p>
         </div>
 
         {/* Login Card */}
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <h2 className="text-2xl font-semibold text-ink-900 text-center">
-              {tCommon('welcome')}
-            </h2>
-            <p className="text-ink-700 text-center">
-              {t('signInToStart')}
-            </p>
+        <Card className="shadow-premium-lg">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-h2 text-ink-900">
+                {tCommon('welcome')}
+              </h2>
+              <p className="text-body-sm text-ink-600">
+                {t('signInToStart')}
+              </p>
+            </div>
 
             {/* Auto-authenticating in Telegram */}
             {loading && detectedTelegram && (
-              <div className="text-center py-4">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                <p className="text-sm text-ink-600 mt-2">{t('authenticating')}</p>
+              <div className="text-center py-8 space-y-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100">
+                  <svg className="animate-spin h-8 w-8 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <p className="text-body-sm text-ink-600">{t('authenticating')}</p>
               </div>
             )}
 
-            {/* Manual Telegram Login (only shown when not in Telegram) */}
+            {/* Manual Telegram Login */}
             {!loading && isOutsideTelegram && (
-              <>
+              <div className="space-y-4">
                 <Button
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  className="w-full h-14 text-base bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl shadow-sm"
                   size="lg"
                   onClick={handleTelegramLogin}
                   disabled={loading}
                 >
+                  <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.053 5.56-5.023c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z"/>
+                  </svg>
                   {loading ? t('authenticatingWithTelegram') : t('continueWithTelegram')}
                 </Button>
 
-                <p className="text-xs text-ink-500 text-center">
-                  {t('openInTelegram')}
-                </p>
-              </>
+                <div className="flex items-center justify-center space-x-2 text-caption text-ink-500">
+                  <Lock className="w-3 h-3" />
+                  <p>{t('openInTelegram')}</p>
+                </div>
+              </div>
             )}
 
-            {/* Retry button when in Telegram but auth failed */}
+            {/* Retry button */}
             {!loading && detectedTelegram && error && (
               <Button
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                className="w-full h-14 text-base bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-2xl shadow-sm"
                 size="lg"
                 onClick={handleTelegramLogin}
                 disabled={loading}
@@ -205,20 +208,23 @@ export default function LoginPage() {
 
             {/* Error display */}
             {error && !loading && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-700 text-center">{error}</p>
+              <div className="bg-burgundy-50 border-2 border-burgundy-200 rounded-xl p-4 animate-slide-down">
+                <div className="flex items-start space-x-3">
+                  <Shield className="w-5 h-5 text-burgundy-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-body-sm text-burgundy-700">{error}</p>
+                </div>
               </div>
             )}
 
             {/* Development Login */}
             {devAuthEnabled && (
               <>
-                <div className="relative">
+                <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-cream-400" />
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-ink-500">
+                  <div className="relative flex justify-center">
+                    <span className="px-4 bg-white text-caption text-ink-500 font-medium">
                       {t('developmentMode')}
                     </span>
                   </div>
@@ -226,7 +232,7 @@ export default function LoginPage() {
 
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-12 text-base"
                   size="lg"
                   onClick={handleDevLogin}
                   disabled={loading}
@@ -234,7 +240,7 @@ export default function LoginPage() {
                   {loading ? t('loggingIn') : t('devLogin')}
                 </Button>
 
-                <p className="text-xs text-ink-500 text-center">
+                <p className="text-caption text-ink-500 text-center">
                   {t('devAuthDescription')}
                 </p>
               </>
@@ -243,7 +249,7 @@ export default function LoginPage() {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-sm text-ink-500 mt-6">
+        <p className="text-center text-caption text-ink-500">
           {t('termsAndPrivacy')}
         </p>
       </div>

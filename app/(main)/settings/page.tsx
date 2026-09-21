@@ -1,45 +1,55 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingState } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { Header } from '@/components/layout/header'
-import { LanguageSelector } from '@/components/language-selector'
-import { LogOut, User, Shield, Users, Trash2, ArrowRight } from 'lucide-react'
+import { LogOut, Shield, Trash2, User, Lock } from 'lucide-react'
 
 interface BlockedUser {
   id: string
-  blocked: {
-    id: string
-    firstName: string
-    profile: {
-      age: number
-      city: string
-      photos: Array<{ url: string; isPrimary: boolean }>
-    }
-  }
-  createdAt: string
+  firstName: string
+  lastName: string
 }
 
 export default function SettingsPage() {
   const t = useTranslations('settings')
   const tCommon = useTranslations('common')
-  const tAccount = useTranslations('account')
-  const tApp = useTranslations('app')
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchBlockedUsers()
     fetchUserRole()
   }, [])
+
+  const fetchBlockedUsers = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/settings/blocked-users')
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/login')
+          return
+        }
+        throw new Error(t('failedToFetchBlockedUsers'))
+      }
+      const data = await response.json()
+      setBlockedUsers(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchUserRole = async () => {
     try {
@@ -53,181 +63,205 @@ export default function SettingsPage() {
     }
   }
 
-  const fetchBlockedUsers = async () => {
-    try {
-      const response = await fetch('/api/blocks')
-      if (!response.ok) {
-        throw new Error('Failed to fetch blocked users')
-      }
-      const data = await response.json()
-      setBlockedUsers(data)
-    } catch (err) {
-      console.error('Failed to fetch blocked users:', err)
-    }
-  }
-
-  const handleLogout = async () => {
-    if (!confirm(t('logout') + '?')) {
+  const handleUnblock = async (userId: string) => {
+    if (!confirm(t('confirmUnblock'))) {
       return
     }
 
     try {
-      setLoading(true)
+      const response = await fetch(`/api/settings/blocked-users/${userId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error(t('failedToUnblock'))
+      }
+
+      setBlockedUsers(blockedUsers.filter(u => u.id !== userId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
+    }
+  }
+
+  const handleLogout = async () => {
+    if (!confirm(t('logoutConfirm'))) {
+      return
+    }
+
+    try {
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
       })
 
       if (!response.ok) {
-        throw new Error(t('logout'))
+        throw new Error(t('logoutFailed'))
       }
 
       router.push('/login')
     } catch (err) {
       setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleDeleteAccount = async () => {
-    const confirmation = prompt('To delete your account, type DELETE:')
-    if (confirmation !== 'DELETE') {
-      setError('Account deletion cancelled')
-      return
-    }
-
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+    if (!confirm(t('deleteAccountConfirm'))) {
       return
     }
 
     try {
-      setLoading(true)
-      const response = await fetch('/api/account', {
+      const response = await fetch('/api/settings/account', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation: 'DELETE' }),
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to delete account')
+        throw new Error(t('deleteAccountFailed'))
       }
 
-      // Account deleted, redirect to login
       router.push('/login')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
+        <LoadingState message={t('loadingSettings')} />
+      </div>
+    )
+  }
+
+  if (error && blockedUsers.length === 0) {
+    return (
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
+        <ErrorState
+          message={error}
+          onRetry={fetchBlockedUsers}
+        />
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
-        {/* Header */}
-        <Header title={tCommon('settings')} showLanguageSelector={true} />
+        <Header title={t('settings')} showLanguageSelector={true} />
 
-        {/* Settings Options */}
-        <div className="p-4 space-y-3">
-          {error && (
-            <ErrorState
-              message={error}
-              onRetry={() => setError(null)}
-            />
-          )}
-
-          {/* Account Section */}
-          <Card>
+        <div className="p-4 space-y-4">
+          {/* Account Settings */}
+          <Card className="shadow-premium">
             <CardHeader>
-              <CardTitle className="text-lg">{t('accountSettings')}</CardTitle>
+              <CardTitle className="text-h2 flex items-center">
+                <User className="w-5 h-5 mr-2 text-emerald-500" />
+                {t('account')}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               <Button
-                variant="ghost"
-                className="w-full justify-start"
+                variant="outline"
+                className="w-full h-12 text-base"
                 onClick={() => router.push('/profile/edit')}
               >
-                <User className="h-5 w-5 mr-3" />
                 {t('editProfile')}
-                <ArrowRight className="h-5 w-5 ml-auto" />
               </Button>
               <Button
-                variant="ghost"
-                className="w-full justify-start"
+                variant="outline"
+                className="w-full h-12 text-base"
                 onClick={() => router.push('/profile/preferences')}
               >
-                <Shield className="h-5 w-5 mr-3" />
                 {t('editPreferences')}
-                <ArrowRight className="h-5 w-5 ml-auto" />
               </Button>
-              {isAdmin && (
+            </CardContent>
+          </Card>
+
+          {/* Privacy Settings */}
+          <Card className="shadow-premium">
+            <CardHeader>
+              <CardTitle className="text-h2 flex items-center">
+                <Lock className="w-5 h-5 mr-2 text-gold-500" />
+                {t('privacy')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <h3 className="text-body font-medium text-ink-900 mb-2">{t('blockedUsers')}</h3>
+                {blockedUsers.length === 0 ? (
+                  <p className="text-body-sm text-ink-500">{t('noBlockedUsers')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {blockedUsers.map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-3 bg-cream-100 rounded-xl">
+                        <span className="text-body text-ink-900">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleUnblock(user.id)}
+                          className="text-emerald-600 hover:text-emerald-700"
+                        >
+                          {t('unblock')}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Admin Panel */}
+          {isAdmin && (
+            <Card className="shadow-premium">
+              <CardHeader>
+                <CardTitle className="text-h2 flex items-center">
+                  <Shield className="w-5 h-5 mr-2 text-burgundy-500" />
+                  {t('adminPanel')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <Button
-                  variant="ghost"
-                  className="w-full justify-start"
+                  variant="outline"
+                  className="w-full h-12 text-base"
                   onClick={() => router.push('/admin/dashboard')}
                 >
-                  <Users className="h-5 w-5 mr-3" />
-                  Admin Panel
-                  <ArrowRight className="h-5 w-5 ml-auto" />
+                  {t('goToAdminPanel')}
                 </Button>
-              )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Danger Zone */}
+          <Card className="shadow-premium border-2 border-burgundy-200">
+            <CardHeader>
+              <CardTitle className="text-h2 text-burgundy-600 flex items-center">
+                <Trash2 className="w-5 h-5 mr-2" />
+                {t('dangerZone')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               <Button
-                variant="ghost"
-                className="w-full justify-start text-red-500 hover:text-red-600"
+                variant="outline"
+                className="w-full h-12 text-base border-burgundy-300 text-burgundy-600 hover:bg-burgundy-50"
                 onClick={handleLogout}
-                disabled={loading}
               >
-                <LogOut className="h-5 w-5 mr-3" />
-                {loading ? tCommon('loading') : t('logout')}
+                <LogOut className="w-5 h-5 mr-2" />
+                {t('logout')}
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Privacy & Safety Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('privacy')} & {t('notifications')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => router.push('/settings/blocked')}
-              >
-                <Users className="h-5 w-5 mr-3" />
-                {t('blockedUsers')}
-                <span className="ml-auto text-xs text-ink-500">{blockedUsers.length}</span>
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Account Deletion Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg text-red-600">Danger Zone</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+                variant="destructive"
+                className="w-full h-12 text-base"
                 onClick={handleDeleteAccount}
-                disabled={loading}
               >
-                <Trash2 className="h-5 w-5 mr-3" />
-                {loading ? tCommon('deleting') : t('deleteAccount')}
+                <Trash2 className="w-5 h-5 mr-2" />
+                {t('deleteAccount')}
               </Button>
-              <p className="text-xs text-ink-500 mt-2">
-                {tAccount('deleteAccountWarning')}
-              </p>
             </CardContent>
           </Card>
 
           {/* App Info */}
-          <div className="text-center text-sm text-ink-500 pt-4">
-            <p>{tApp('name')} v1.0.0</p>
-            <p className="mt-1">{tApp('tagline')}</p>
+          <div className="text-center text-caption text-ink-500 pt-4">
+            <p>YeneMatch v1.0.0</p>
           </div>
         </div>
       </div>

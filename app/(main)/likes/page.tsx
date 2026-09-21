@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error'
 import { EmptyState } from '@/components/ui/empty'
 import { BottomNav } from '@/components/layout/bottom-nav'
-import { X } from 'lucide-react'
+import { X, Heart } from 'lucide-react'
 
 interface LikedProfile {
   id: string
@@ -81,7 +81,7 @@ export default function LikesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <LoadingState message={t('loadingLikes')} />
       </div>
     )
@@ -89,7 +89,7 @@ export default function LikesPage() {
 
   if (error && likes.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen bg-cream-300 flex flex-col items-center justify-center p-4 safe-top safe-bottom">
         <ErrorState
           message={error}
           onRetry={fetchLikes}
@@ -102,15 +102,15 @@ export default function LikesPage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">{t('yourLikes')}</h1>
+        <div className="bg-white px-4 py-4 border-b border-cream-400 safe-top">
+          <h1 className="text-h2 text-ink-900">{t('yourLikes')}</h1>
         </div>
 
         {/* Likes List */}
         <div className="p-4 space-y-3">
           {likes.length === 0 ? (
             <EmptyState
-              icon="❤️"
+              icon={<Heart className="w-16 h-16 text-ink-400 mx-auto" />}
               title={t('noLikes')}
               description={t('startLiking')}
               action={
@@ -124,30 +124,35 @@ export default function LikesPage() {
               const primaryPhoto = like.photos.find(p => p.isPrimary) || like.photos[0]
 
               return (
-                <Card key={like.id}>
+                <Card key={like.id} className="hover:shadow-md transition-all duration-200 active:scale-[0.98]">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-4">
-                      {primaryPhoto ? (
-                        <Avatar
-                          src={primaryPhoto.url}
-                          alt={like.user.firstName}
-                          fallback={like.user.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      ) : (
-                        <Avatar
-                          fallback={like.user.firstName[0]}
-                          className="h-16 w-16"
-                        />
-                      )}
+                      <div className="relative">
+                        {primaryPhoto ? (
+                          <Avatar
+                            src={primaryPhoto.url}
+                            alt={like.user.firstName}
+                            fallback={like.user.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        ) : (
+                          <Avatar
+                            fallback={like.user.firstName[0]}
+                            className="h-16 w-16"
+                          />
+                        )}
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <Heart className="w-3 h-3 text-white fill-white" />
+                        </div>
+                      </div>
 
                       <div className="flex-1">
-                        <h3 className="font-semibold text-ink-900">
+                        <h3 className="text-h3 text-ink-900">
                           {like.user.firstName}, {like.age}
                         </h3>
-                        <p className="text-sm text-ink-700">{like.city}</p>
+                        <p className="text-body-sm text-ink-600">{like.city}</p>
                         {like.bio && (
-                          <p className="text-xs text-ink-500 mt-1 line-clamp-2">
+                          <p className="text-caption text-ink-500 mt-1 line-clamp-2">
                             {like.bio}
                           </p>
                         )}
@@ -155,10 +160,11 @@ export default function LikesPage() {
 
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => handleUnlike(like.id)}
+                        className="rounded-full text-ink-400 hover:text-burgundy-600"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                       </Button>
                     </div>
                   </CardContent>
