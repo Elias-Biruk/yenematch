@@ -35,7 +35,8 @@
     "deleting": "Haqa jiruu...",
     "add": "Galchaa",
     "remove": "Haasa",
-    "somethingWentWrong": "Dogoggora"
+    "somethingWentWrong": "Dogoggora",
+    "settings": "Qindaa'ina"
   },
   "auth": {
     "signIn": "Seena",

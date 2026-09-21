@@ -35,7 +35,8 @@
     "deleting": "Deleting...",
     "add": "Add",
     "remove": "Remove",
-    "somethingWentWrong": "Something went wrong"
+    "somethingWentWrong": "Something went wrong",
+    "settings": "Settings"
   },
   "auth": {
     "signIn": "Sign in",

@@ -35,7 +35,8 @@
     "deleting": "በሰርዝ ላይ...",
     "add": "ያክት",
     "remove": "ሰርዝ",
-    "somethingWentWrong": "ስሕት ተፈጠረ"
+    "somethingWentWrong": "ስሕት ተፈጠረ",
+    "settings": "ቅንብራት"
   },
   "auth": {
     "signIn": "ግባ",

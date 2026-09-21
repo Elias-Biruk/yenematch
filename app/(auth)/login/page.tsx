@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default function LoginPage() {
-  const t = useTranslations()
+  const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
+  const tApp = useTranslations('app')
   const router = useRouter()
   const [devAuthEnabled, setDevAuthEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -89,7 +91,7 @@ export default function LoginPage() {
       if (!response.ok) {
         const data = await response.json()
         console.error('Auth error response:', data)
-        throw new Error(data.error || t('auth.loginFailed'))
+        throw new Error(data.error || t('loginFailed'))
       }
 
       const result = await response.json()
@@ -102,7 +104,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('Telegram authentication error:', error)
-      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
+      const errorMessage = error instanceof Error ? error.message : t('loginFailed')
       setError(errorMessage)
       // Don't set isOutsideTelegram on error - we're still in Telegram
     } finally {
@@ -112,7 +114,7 @@ export default function LoginPage() {
 
   const handleTelegramLogin = async () => {
     if (!isTelegramReady) {
-      alert(t('auth.openInTelegram'))
+      alert(t('openInTelegram'))
       return
     }
 
@@ -128,7 +130,7 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || t('auth.loginFailed'))
+        throw new Error(data.error || t('loginFailed'))
       }
 
       router.push('/discover')
@@ -146,10 +148,10 @@ export default function LoginPage() {
         {/* Branding */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-emerald-500 mb-3">
-            {t('app.name')}
+            {tApp('name')}
           </h1>
           <p className="text-ink-700 text-xl">
-            {t('app.tagline')}
+            {tApp('tagline')}
           </p>
         </div>
 
@@ -157,17 +159,17 @@ export default function LoginPage() {
         <Card>
           <CardContent className="p-6 space-y-4">
             <h2 className="text-2xl font-semibold text-ink-900 text-center">
-              {t('common.welcome')}
+              {tCommon('welcome')}
             </h2>
             <p className="text-ink-700 text-center">
-              {t('auth.signInToStart')}
+              {t('signInToStart')}
             </p>
 
             {/* Auto-authenticating in Telegram */}
             {loading && detectedTelegram && (
               <div className="text-center py-4">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                <p className="text-sm text-ink-600 mt-2">{t('auth.authenticating')}</p>
+                <p className="text-sm text-ink-600 mt-2">{t('authenticating')}</p>
               </div>
             )}
 
@@ -180,11 +182,11 @@ export default function LoginPage() {
                   onClick={handleTelegramLogin}
                   disabled={loading}
                 >
-                  {loading ? t('auth.authenticatingWithTelegram') : t('auth.continueWithTelegram')}
+                  {loading ? t('authenticatingWithTelegram') : t('continueWithTelegram')}
                 </Button>
 
                 <p className="text-xs text-ink-500 text-center">
-                  {t('auth.openInTelegram')}
+                  {t('openInTelegram')}
                 </p>
               </>
             )}
@@ -197,7 +199,7 @@ export default function LoginPage() {
                 onClick={handleTelegramLogin}
                 disabled={loading}
               >
-                {loading ? t('auth.authenticatingWithTelegram') : t('auth.retryAuth')}
+                {loading ? t('authenticatingWithTelegram') : t('retryAuth')}
               </Button>
             )}
 
@@ -217,7 +219,7 @@ export default function LoginPage() {
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-2 bg-white text-ink-500">
-                      {t('auth.developmentMode')}
+                      {t('developmentMode')}
                     </span>
                   </div>
                 </div>
@@ -229,11 +231,11 @@ export default function LoginPage() {
                   onClick={handleDevLogin}
                   disabled={loading}
                 >
-                  {loading ? t('auth.loggingIn') : t('auth.devLogin')}
+                  {loading ? t('loggingIn') : t('devLogin')}
                 </Button>
 
                 <p className="text-xs text-ink-500 text-center">
-                  {t('auth.devAuthDescription')}
+                  {t('devAuthDescription')}
                 </p>
               </>
             )}
@@ -242,7 +244,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-ink-500 mt-6">
-          {t('auth.termsAndPrivacy')}
+          {t('termsAndPrivacy')}
         </p>
       </div>
     </div>

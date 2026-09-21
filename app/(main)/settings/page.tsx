@@ -126,7 +126,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <Header title={t('settings')} showLanguageSelector={true} />
+        <Header title={tCommon('settings')} showLanguageSelector={true} />
 
         {/* Settings Options */}
         <div className="p-4 space-y-3">

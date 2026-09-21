@@ -1,11 +1,12 @@
-import { notFound } from 'next/navigation'
 import { getRequestConfig } from 'next-intl/server'
 
 const locales = ['en', 'am', 'om', 'ti']
 
 export default getRequestConfig(async ({ locale }) => {
-  // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as any)) notFound()
+  // Provide a default locale if none is specified
+  if (!locale || !locales.includes(locale as any)) {
+    locale = 'en'
+  }
 
   return {
     locale: locale as string,
