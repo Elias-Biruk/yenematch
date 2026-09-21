@@ -7,33 +7,27 @@ import { AuthenticationError } from '@/lib/utils/errors'
 const i18nMiddleware = createMiddleware({
   locales: ['en', 'am', 'om', 'ti'],
   defaultLocale: 'en',
-  localePrefix: 'as-needed'
+  localePrefix: 'never'  // Changed from 'as-needed' since we don't use [locale] folder structure
 })
 
 export async function middleware(request: NextRequest) {
+  // Apply i18n middleware first
+  const response = i18nMiddleware(request)
+  
   // Skip auth middleware for certain paths
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/api/auth', '/onboarding']
   
-  // Check if pathname matches public paths (with or without locale prefix)
-  const isPublicPath = publicPaths.some(path => {
-    return pathname === path || 
-           pathname.startsWith(path + '/') ||
-           pathname.match(/^\/[a-z]{2}\/login/) ||
-           pathname.match(/^\/[a-z]{2}\/api\/auth/) ||
-           pathname.match(/^\/[a-z]{2}\/onboarding/)
-  })
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
   
   if (isPublicPath) {
-    return i18nMiddleware(request)
+    return response
   }
   
   // Check authentication for protected routes
   try {
     const session = await getSession()
     if (!session) {
-      // Redirect to login if not authenticated
-      // Don't apply i18n middleware to redirect - let next request handle it
       return NextResponse.redirect(new URL('/login', request.url))
     }
   } catch (error) {
@@ -41,10 +35,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
   
-  // Apply i18n middleware for authenticated users
-  return i18nMiddleware(request)
+  return response
 }
 
 export const config = {
-  matcher: ['/', '/(en|am|om|ti)/:path*', '/((?!api|_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/', '/((?!api|_next/static|_next/image|favicon.ico).*)']
 }
