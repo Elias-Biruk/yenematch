@@ -72,6 +72,9 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [reason, setReason] = useState('')
+  const [editMode, setEditMode] = useState(false)
+  const [editData, setEditData] = useState({ city: '', bio: '', age: '', gender: '' })
+  const [updateLoading, setUpdateLoading] = useState(false)
 
   useEffect(() => {
     params.then(p => setUserId(p.userId))
@@ -125,6 +128,15 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
       if (userResponse.ok) {
         const userData = await userResponse.json()
         setUser(userData)
+        // Initialize edit data when user is loaded
+        if (userData.profile) {
+          setEditData({
+            city: userData.profile.city || '',
+            bio: userData.profile.bio || '',
+            age: userData.profile.age?.toString() || '',
+            gender: userData.profile.gender || '',
+          })
+        }
       }
 
       setReason('')
@@ -133,6 +145,58 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
       alert(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userId) return
+
+    setUpdateLoading(true)
+    try {
+      const requestBody: any = {}
+      if (editData.city.trim()) requestBody.city = editData.city.trim()
+      if (editData.bio.trim()) requestBody.bio = editData.bio.trim()
+      if (editData.age) requestBody.age = parseInt(editData.age)
+      if (editData.gender) requestBody.gender = editData.gender
+
+      console.log('Admin profile update request body:', requestBody)
+
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      })
+
+      const responseData = await response.json()
+      console.log('Admin profile update response:', response.status, responseData)
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to update profile')
+      }
+
+      // Refresh user data
+      const userResponse = await fetch(`/api/admin/users/${userId}`)
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+        setUser(userData)
+        if (userData.profile) {
+          setEditData({
+            city: userData.profile.city || '',
+            bio: userData.profile.bio || '',
+            age: userData.profile.age?.toString() || '',
+            gender: userData.profile.gender || '',
+          })
+        }
+      }
+
+      setEditMode(false)
+      alert('Profile updated successfully')
+    } catch (err) {
+      console.error('Admin profile update error:', err)
+      alert(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setUpdateLoading(false)
     }
   }
 
@@ -227,41 +291,112 @@ export default function UserDetail({ params }: { params: Promise<{ userId: strin
             <>
               {/* Profile Info */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Information</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center">
-                    <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-gray-500">Age</p>
-                      <p className="font-medium text-gray-900">{user.profile.age}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-gray-500">Gender</p>
-                      <p className="font-medium text-gray-900">{user.profile.gender}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-gray-500">City</p>
-                      <p className="font-medium text-gray-900">{user.profile.city}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <p className="text-gray-500">Onboarding</p>
-                      <p className="font-medium text-gray-900">
-                        {user.profile.completedOnboarding ? 'Completed' : 'Not completed'}
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Profile Information</h3>
+                  <button
+                    onClick={() => setEditMode(!editMode)}
+                    className="text-sm text-blue-600 hover:text-blue-900"
+                  >
+                    {editMode ? 'Cancel' : 'Edit'}
+                  </button>
                 </div>
 
-                {user.profile.bio && (
+                {editMode ? (
+                  <form onSubmit={handleProfileUpdate} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input
+                          type="text"
+                          value={editData.city}
+                          onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                        <input
+                          type="number"
+                          value={editData.age}
+                          onChange={(e) => setEditData({ ...editData, age: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <select
+                          value={editData.gender}
+                          onChange={(e) => setEditData({ ...editData, gender: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="MALE">Male</option>
+                          <option value="FEMALE">Female</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                      <textarea
+                        value={editData.bio}
+                        onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={updateLoading}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {updateLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditMode(false)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center">
+                      <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-gray-500">Age</p>
+                        <p className="font-medium text-gray-900">{user.profile.age}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <UserIcon className="w-4 h-4 text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-gray-500">Gender</p>
+                        <p className="font-medium text-gray-900">{user.profile.gender}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-gray-500">City</p>
+                        <p className="font-medium text-gray-900">{user.profile.city}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                      <div>
+                        <p className="text-gray-500">Onboarding</p>
+                        <p className="font-medium text-gray-900">
+                          {user.profile.completedOnboarding ? 'Completed' : 'Not completed'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!editMode && user.profile.bio && (
                   <div className="mt-4">
                     <p className="text-gray-500 text-sm mb-1">Bio</p>
                     <p className="text-gray-900">{user.profile.bio}</p>

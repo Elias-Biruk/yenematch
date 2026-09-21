@@ -10,6 +10,13 @@ const roleUpdateSchema = z.object({
   reason: z.string().min(1).max(500),
 })
 
+const profileUpdateSchema = z.object({
+  city: z.string().min(1).max(100).trim().optional(),
+  bio: z.string().max(500).trim().optional(),
+  age: z.number().int().min(18).max(100).optional(),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+})
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
@@ -171,6 +178,73 @@ export async function PATCH(
     
     return NextResponse.json({ success: true, role })
   } catch (error) {
+    const { message, statusCode } = handleError(error)
+    return NextResponse.json(
+      { error: message },
+      { status: statusCode }
+    )
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const session = await requireAdmin(request)
+    const { userId } = await params
+    
+    const body = await request.json()
+    const validatedData = profileUpdateSchema.parse(body)
+    
+    console.log('[Admin PUT /api/admin/users/[userId]] Update profile data:', validatedData)
+    
+    // Check if user has a profile
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profile: true },
+    })
+    
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+    
+    if (!targetUser.profile) {
+      return NextResponse.json(
+        { error: 'User has no profile' },
+        { status: 400 }
+      )
+    }
+    
+    // Update profile fields
+    const updateData: any = {}
+    if (validatedData.city !== undefined) updateData.city = validatedData.city
+    if (validatedData.bio !== undefined) updateData.bio = validatedData.bio
+    if (validatedData.age !== undefined) updateData.age = validatedData.age
+    if (validatedData.gender !== undefined) updateData.gender = validatedData.gender
+    
+    console.log('[Admin PUT /api/admin/users/[userId]] Prisma update data:', updateData)
+    
+    const updatedProfile = await prisma.profile.update({
+      where: { userId },
+      data: updateData,
+      select: {
+        id: true,
+        city: true,
+        bio: true,
+        age: true,
+        gender: true,
+      },
+    })
+    
+    console.log('[Admin PUT /api/admin/users/[userId]] Updated profile from DB:', updatedProfile)
+    
+    return NextResponse.json({ success: true, profile: updatedProfile })
+  } catch (error) {
+    console.error('[Admin PUT /api/admin/users/[userId]] Error:', error)
     const { message, statusCode } = handleError(error)
     return NextResponse.json(
       { error: message },
