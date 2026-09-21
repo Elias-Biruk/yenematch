@@ -28,10 +28,21 @@ export default function LoginPage() {
 
   const checkTelegramReady = () => {
     // Check if running in Telegram Web App
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      setIsTelegramReady(true)
-      window.Telegram.WebApp.ready()
-      window.Telegram.WebApp.expand()
+    if (typeof window !== 'undefined') {
+      // Poll for Telegram WebApp to be available
+      const checkInterval = setInterval(() => {
+        if (window.Telegram?.WebApp) {
+          clearInterval(checkInterval)
+          setIsTelegramReady(true)
+          window.Telegram.WebApp.ready()
+          window.Telegram.WebApp.expand()
+        }
+      }, 100)
+
+      // Stop checking after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval)
+      }, 5000)
     }
   }
 
