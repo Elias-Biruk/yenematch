@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [devAuthEnabled, setDevAuthEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isTelegramReady, setIsTelegramReady] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isOutsideTelegram, setIsOutsideTelegram] = useState(false)
 
   useEffect(() => {
     checkDevAuthStatus()
@@ -27,22 +29,77 @@ export default function LoginPage() {
   }
 
   const checkTelegramReady = () => {
-    // Check if running in Telegram Web App
     if (typeof window !== 'undefined') {
-      // Poll for Telegram WebApp to be available
+      let foundTelegram = false
       const checkInterval = setInterval(() => {
         if (window.Telegram?.WebApp) {
           clearInterval(checkInterval)
+          foundTelegram = true
           setIsTelegramReady(true)
           window.Telegram.WebApp.ready()
           window.Telegram.WebApp.expand()
+          
+          // Auto-attempt authentication when in Telegram
+          attemptTelegramAuth()
         }
       }, 100)
 
-      // Stop checking after 5 seconds
+      // After 5 seconds, if no Telegram found, show button
       setTimeout(() => {
         clearInterval(checkInterval)
+        if (!foundTelegram) {
+          setIsOutsideTelegram(true)
+        }
       }, 5000)
+    }
+  }
+
+  const attemptTelegramAuth = async () => {
+    if (!window.Telegram?.WebApp) {
+      console.log('Telegram WebApp not available')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+      const initData = window.Telegram.WebApp.initData
+
+      if (!initData) {
+        throw new Error('Telegram initialization data not available')
+      }
+
+      console.log('Attempting Telegram authentication with initData:', initData.substring(0, 50) + '...')
+
+      const response = await fetch('/api/auth/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData }),
+      })
+
+      console.log('Auth response status:', response.status)
+
+      if (!response.ok) {
+        const data = await response.json()
+        console.error('Auth error response:', data)
+        throw new Error(data.error || 'Telegram authentication failed')
+      }
+
+      const result = await response.json()
+      console.log('Auth result:', { isNewUser: result.isNewUser, hasUser: !!result.user })
+
+      if (result.isNewUser) {
+        router.push('/onboarding')
+      } else {
+        router.push('/discover')
+      }
+    } catch (error) {
+      console.error('Telegram authentication error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Login failed'
+      setError(errorMessage)
+      setIsOutsideTelegram(true) // Show button on error so user can retry
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -52,38 +109,7 @@ export default function LoginPage() {
       return
     }
 
-    try {
-      setLoading(true)
-      const initData = window.Telegram?.WebApp?.initData
-
-      if (!initData) {
-        throw new Error('Telegram initialization data not available')
-      }
-
-      const response = await fetch('/api/auth/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Telegram authentication failed')
-      }
-
-      const result = await response.json()
-
-      if (result.isNewUser) {
-        router.push('/onboarding')
-      } else {
-        router.push('/discover')
-      }
-    } catch (error) {
-      console.error('Telegram login error:', error)
-      alert(error instanceof Error ? error.message : 'Login failed')
-    } finally {
-      setLoading(false)
-    }
+    await attemptTelegramAuth()
   }
 
   const handleDevLogin = async () => {
@@ -130,20 +156,37 @@ export default function LoginPage() {
               Sign in to start discovering amazing people
             </p>
 
-            {/* Telegram Login */}
-            <Button
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-              size="lg"
-              onClick={handleTelegramLogin}
-              disabled={loading}
-            >
-              {loading ? 'Authenticating...' : 'Continue with Telegram'}
-            </Button>
+            {/* Auto-authenticating in Telegram */}
+            {loading && !isOutsideTelegram && (
+              <div className="text-center py-4">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                <p className="text-sm text-ink-600 mt-2">Authenticating with Telegram...</p>
+              </div>
+            )}
 
-            {!isTelegramReady && (
-              <p className="text-xs text-ink-500 text-center">
-                Open this app through Telegram for authentication
-              </p>
+            {/* Manual Telegram Login (shown when not in Telegram or on error) */}
+            {!loading && isOutsideTelegram && (
+              <>
+                <Button
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  size="lg"
+                  onClick={handleTelegramLogin}
+                  disabled={loading}
+                >
+                  {loading ? 'Authenticating...' : 'Continue with Telegram'}
+                </Button>
+
+                <p className="text-xs text-ink-500 text-center">
+                  Open this app through Telegram for authentication
+                </p>
+              </>
+            )}
+
+            {/* Error display */}
+            {error && !loading && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-700 text-center">{error}</p>
+              </div>
             )}
 
             {/* Development Login */}

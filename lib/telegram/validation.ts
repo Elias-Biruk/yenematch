@@ -33,6 +33,20 @@ export function validateTelegramInitData(
     throw new Error('Invalid init data: hash verification failed')
   }
 
+  // Check auth_date freshness (must be within last 24 hours)
+  const authDate = urlParams.get('auth_date')
+  if (!authDate) {
+    throw new Error('Invalid init data: missing auth_date')
+  }
+
+  const authTimestamp = parseInt(authDate, 10)
+  const now = Math.floor(Date.now() / 1000)
+  const maxAge = 24 * 60 * 60 // 24 hours in seconds
+
+  if (now - authTimestamp > maxAge) {
+    throw new Error('Invalid init data: expired auth_date')
+  }
+
   const userStr = urlParams.get('user')
   if (!userStr) {
     throw new Error('Invalid init data: missing user')
