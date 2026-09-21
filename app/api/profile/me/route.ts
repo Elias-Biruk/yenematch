@@ -33,19 +33,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const validatedData = updateProfileSchema.parse(body)
     
-    // Update user name if provided
-    if (validatedData.firstName || validatedData.lastName) {
-      const { prisma } = await import('@/lib/db/prisma')
-      await prisma.user.update({
-        where: { id: session.userId },
-        data: {
-          ...(validatedData.firstName && { firstName: validatedData.firstName }),
-          ...(validatedData.lastName !== undefined && { lastName: validatedData.lastName }),
-        },
-      })
-    }
-    
-    // Update basic profile fields
+    // Update basic profile fields (including firstName/lastName via service)
     await updateProfile(session.userId, validatedData)
     
     // Update photos if provided

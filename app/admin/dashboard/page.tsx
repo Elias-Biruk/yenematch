@@ -28,12 +28,20 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/admin/stats?timeRange=${timeRange}`)
+      const timeRangeParam = timeRange === '24h' ? 'today' : timeRange === '7d' ? 'week' : timeRange === '30d' ? 'month' : 'all'
+      const response = await fetch(`/api/admin/dashboard?timeRange=${timeRangeParam}`)
       if (!response.ok) {
         throw new Error('Failed to fetch stats')
       }
       const data = await response.json()
-      setStats(data)
+      setStats({
+        totalUsers: data.totalUsers || 0,
+        activeUsers: data.activeUsers || 0,
+        totalMatches: data.activeMatches || 0,
+        pendingReports: data.pendingReports || 0,
+        newUsersToday: data.newUsers || 0,
+        newMatchesToday: data.newMatches || 0,
+      })
     } catch (error) {
       console.error('Failed to fetch stats:', error)
     } finally {
