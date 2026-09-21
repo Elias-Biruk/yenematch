@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Heart, X, ChevronLeft, ChevronRight, Flag } from 'lucide-react'
 import { ReportModal } from '@/components/report/report-modal'
+import { useTranslations } from 'next-intl'
 
 interface ProfileCardProps {
   profile: {
@@ -29,6 +30,7 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ profile, onLike, onPass, onReport, loading }: ProfileCardProps) {
+  const t = useTranslations('profileCard')
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0)
   const [showReportModal, setShowReportModal] = useState(false)
   
@@ -127,7 +129,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
               ))}
               {profile.interests.length > 5 && (
                 <span className="text-xs text-ink-500">
-                  +{profile.interests.length - 5} more
+                  {t('moreInterests', { count: profile.interests.length - 5 })}
                 </span>
               )}
             </div>
@@ -160,7 +162,7 @@ export function ProfileCard({ profile, onLike, onPass, onReport, loading }: Prof
               disabled={loading}
             >
               <Flag className="h-4 w-4" />
-              Report {profile.user.firstName}
+              {t('reportUser', { name: profile.user.firstName })}
             </button>
           )}
         </div>

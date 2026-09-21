@@ -47,6 +47,23 @@ export function withAdminAuth(handler: (request: NextRequest, session: any) => P
   }
 }
 
+export function withSuperAdminAuth(handler: (request: NextRequest, session: any) => Promise<NextResponse>) {
+  return async (request: NextRequest) => {
+    try {
+      const session = await requireSuperAdmin(request)
+      return handler(request, session)
+    } catch (error) {
+      if (error instanceof AuthorizationError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: error.statusCode }
+        )
+      }
+      throw error
+    }
+  }
+}
+
 export async function requireSuperAdmin(request: NextRequest) {
   const session = await getSession()
   

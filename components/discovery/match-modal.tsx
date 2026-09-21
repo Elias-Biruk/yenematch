@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Heart } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface MatchModalProps {
   match: {
@@ -29,6 +30,7 @@ interface MatchModalProps {
 }
 
 export function MatchModal({ match, currentUserId, onSendMessage, onKeepDiscovering }: MatchModalProps) {
+  const t = useTranslations('matchModal')
   const otherUser = match.users.liker.id === currentUserId ? match.users.liked : match.users.liker
   const currentUser = match.users.liker.id === currentUserId ? match.users.liker : match.users.liked
   
@@ -47,9 +49,9 @@ export function MatchModal({ match, currentUserId, onSendMessage, onKeepDiscover
 
         {/* Match Text */}
         <div>
-          <h2 className="text-3xl font-bold text-ink-900 mb-2">It&apos;s a Match!</h2>
+          <h2 className="text-3xl font-bold text-ink-900 mb-2">{t('itsAMatch')}</h2>
           <p className="text-ink-700">
-            You and {otherUser.firstName} liked each other
+            {t('youAndLikedEachOther', { name: otherUser.firstName })}
           </p>
         </div>
 
@@ -86,7 +88,7 @@ export function MatchModal({ match, currentUserId, onSendMessage, onKeepDiscover
 
         {/* YeneMatch Message */}
         <p className="text-sm text-ink-600 italic">
-          Start a conversation and get to know each other on YeneMatch
+          {t('startConversation')}
         </p>
 
         {/* Actions */}
@@ -95,14 +97,14 @@ export function MatchModal({ match, currentUserId, onSendMessage, onKeepDiscover
             className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-medium"
             onClick={() => onSendMessage(match.id)}
           >
-            Send a Message
+            {t('sendMessage')}
           </Button>
           <Button
             variant="outline"
             className="w-full h-12 border-2 border-ink-200 hover:border-ink-300 hover:bg-ink-50 text-ink-700 rounded-full font-medium"
             onClick={onKeepDiscovering}
           >
-            Keep Discovering
+            {t('keepDiscovering')}
           </Button>
         </div>
       </div>

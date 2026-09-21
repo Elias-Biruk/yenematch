@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ReportReason } from '@prisma/client'
+import { useTranslations } from 'next-intl'
 
 interface ReportModalProps {
   isOpen: boolean
@@ -14,6 +15,8 @@ interface ReportModalProps {
 }
 
 export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName, onSuccess }: ReportModalProps) {
+  const t = useTranslations('reportModal')
+  const tReportReasons = useTranslations('reportReasons')
   const [reason, setReason] = useState<ReportReason | ''>('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,7 +27,7 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
     e.preventDefault()
     
     if (!reason) {
-      setError('Please select a reason')
+      setError(t('pleaseSelectReason'))
       return
     }
 
@@ -44,7 +47,7 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to submit report')
+        throw new Error(data.error || t('failedToSubmitReport'))
       }
 
       setSuccess(true)
@@ -53,7 +56,7 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
         onSuccess()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : t('anErrorOccurred'))
     } finally {
       setLoading(false)
     }
@@ -92,13 +95,13 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
           {!success ? (
             <>
               <h2 className="text-xl font-semibold text-ink-900 mb-4">
-                Report {reportedUserName}
+                {t('reportUser', { name: reportedUserName })}
               </h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-ink-900 mb-2">
-                    Reason for reporting
+                    {t('reasonForReporting')}
                   </label>
                   <select
                     value={reason}
@@ -106,31 +109,31 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
                     className="w-full px-4 py-2 border border-cream-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy-500"
                     required
                   >
-                    <option value="">Select a reason</option>
-                    <option value={ReportReason.FAKE_PROFILE}>Fake Profile</option>
-                    <option value={ReportReason.HARASSMENT}>Harassment</option>
-                    <option value={ReportReason.SPAM_SCAM}>Spam/Scam</option>
-                    <option value={ReportReason.SEXUAL_CONTENT}>Sexual Content</option>
-                    <option value={ReportReason.HATE_OR_DISCRIMINATION}>Hate/Discrimination</option>
-                    <option value={ReportReason.UNDERAGE_CONCERN}>Underage Concern</option>
-                    <option value={ReportReason.OTHER}>Other</option>
+                    <option value="">{t('selectReason')}</option>
+                    <option value={ReportReason.FAKE_PROFILE}>{tReportReasons('fakeProfile')}</option>
+                    <option value={ReportReason.HARASSMENT}>{tReportReasons('harassment')}</option>
+                    <option value={ReportReason.SPAM_SCAM}>{tReportReasons('spamScam')}</option>
+                    <option value={ReportReason.SEXUAL_CONTENT}>{tReportReasons('sexualContent')}</option>
+                    <option value={ReportReason.HATE_OR_DISCRIMINATION}>{tReportReasons('hateOrDiscrimination')}</option>
+                    <option value={ReportReason.UNDERAGE_CONCERN}>{tReportReasons('underageConcern')}</option>
+                    <option value={ReportReason.OTHER}>{tReportReasons('other')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-ink-900 mb-2">
-                    Description (optional)
+                    {t('descriptionOptional')}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Please provide any additional details..."
+                    placeholder={t('descriptionPlaceholder')}
                     className="w-full px-4 py-2 border border-cream-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy-500"
                     rows={3}
                     maxLength={500}
                   />
                   <p className="text-xs text-ink-500 mt-1">
-                    {description.length}/500 characters
+                    {description.length}/500 {t('characters')}
                   </p>
                 </div>
 
@@ -147,14 +150,14 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
                     onClick={handleClose}
                     disabled={loading}
                   >
-                    Cancel
+                    {t('cancel')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={loading || !reason}
                     className="bg-burgundy-600 hover:bg-burgundy-700"
                   >
-                    {loading ? 'Submitting...' : 'Submit Report'}
+                    {loading ? t('submitting') : t('submitReport')}
                   </Button>
                 </div>
               </form>
@@ -162,20 +165,20 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
           ) : (
             <>
               <h2 className="text-xl font-semibold text-ink-900 mb-4">
-                Report Submitted
+                {t('reportSubmitted')}
               </h2>
               
               <div className="space-y-4">
                 <p className="text-ink-700">
-                  Thank you for your report. Our team will review it and take appropriate action.
+                  {t('thankYouForReport')}
                 </p>
                 
                 <div className="bg-cream-300 p-4 rounded-lg">
                   <p className="text-sm text-ink-900 font-medium mb-2">
-                    Would you like to block {reportedUserName}?
+                    {t('blockUserQuestion', { name: reportedUserName })}
                   </p>
                   <p className="text-sm text-ink-700 mb-3">
-                    Blocking will prevent them from appearing in your discovery and messaging.
+                    {t('blockUserDescription')}
                   </p>
                   <div className="flex space-x-3">
                     <Button
@@ -183,13 +186,13 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
                       onClick={handleClose}
                       className="flex-1"
                     >
-                      No Thanks
+                      {t('noThanks')}
                     </Button>
                     <Button
                       onClick={handleBlock}
                       className="flex-1 bg-ink-900 hover:bg-ink-800"
                     >
-                      Block User
+                      {t('blockUser')}
                     </Button>
                   </div>
                 </div>
@@ -198,7 +201,7 @@ export function ReportModal({ isOpen, onClose, reportedUserId, reportedUserName,
                   onClick={handleClose}
                   className="w-full"
                 >
-                  Done
+                  {t('done')}
                 </Button>
               </div>
             </>

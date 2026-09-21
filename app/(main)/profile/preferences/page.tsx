@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -26,6 +27,9 @@ interface Preferences {
 
 export default function EditPreferencesPage() {
   const router = useRouter()
+  const t = useTranslations('preferences')
+  const tCommon = useTranslations('common')
+  const tValidation = useTranslations('validation')
   const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -52,7 +56,7 @@ export default function EditPreferencesPage() {
     try {
       const response = await fetch('/api/preferences')
       if (!response.ok) {
-        throw new Error('Failed to fetch preferences')
+        throw new Error(tCommon('error'))
       }
       const data = await response.json()
       setPreferences(data)
@@ -69,7 +73,7 @@ export default function EditPreferencesPage() {
         languages: data.languages?.join(', ') || '',
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('error'))
     } finally {
       setLoading(false)
     }
@@ -85,11 +89,11 @@ export default function EditPreferencesPage() {
       const maxAge = parseInt(formData.maxAge) || MAX_AGE
 
       if (minAge < MIN_AGE || maxAge > MAX_AGE) {
-        throw new Error(`Age must be between ${MIN_AGE} and ${MAX_AGE}`)
+        throw new Error(tValidation('ageRange', { min: MIN_AGE, max: MAX_AGE }))
       }
 
       if (minAge > maxAge) {
-        throw new Error('Minimum age must be less than or equal to maximum age')
+        throw new Error(tValidation('minAgeLessThanMax'))
       }
 
       const response = await fetch('/api/preferences', {
@@ -111,12 +115,12 @@ export default function EditPreferencesPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to update preferences')
+        throw new Error(data.error || tCommon('error'))
       }
 
       router.push('/profile')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('error'))
     } finally {
       setSaving(false)
     }
@@ -125,7 +129,7 @@ export default function EditPreferencesPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Loading preferences..." />
+        <LoadingState message={tCommon('loading')} />
       </div>
     )
   }
@@ -149,7 +153,7 @@ export default function EditPreferencesPage() {
           <Button variant="ghost" size="sm" onClick={() => router.push('/profile')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold text-ink-900 ml-2">Dating Preferences</h1>
+          <h1 className="text-xl font-semibold text-ink-900 ml-2">{t('editPreferences')}</h1>
         </div>
 
         {/* Form */}
@@ -158,21 +162,21 @@ export default function EditPreferencesPage() {
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Interested In</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('interestedIn')}</label>
                   <Select
                     value={formData.preferredGender}
                     onChange={(e) => setFormData({ ...formData, preferredGender: e.target.value })}
                   >
-                    <option value="">No preference</option>
-                    <option value="MALE">Men</option>
-                    <option value="FEMALE">Women</option>
-                    <option value="OTHER">Other</option>
+                    <option value="">{t('noPreference')}</option>
+                    <option value="MALE">{t('men')}</option>
+                    <option value="FEMALE">{t('women')}</option>
+                    <option value="OTHER">{t('other')}</option>
                   </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Min Age</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('minAge')}</label>
                     <Input
                       type="number"
                       min={MIN_AGE}
@@ -183,7 +187,7 @@ export default function EditPreferencesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Max Age</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('maxAge')}</label>
                     <Input
                       type="number"
                       min={MIN_AGE}
@@ -196,22 +200,22 @@ export default function EditPreferencesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Preferred City</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('preferredCity')}</label>
                   <Input
                     type="text"
                     value={formData.preferredCity}
                     onChange={(e) => setFormData({ ...formData, preferredCity: e.target.value })}
-                    placeholder="Enter preferred city (optional)"
+                    placeholder={t('enterPreferredCity')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Relationship Intention</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('relationshipIntention')}</label>
                   <Select
                     value={formData.relationshipIntention}
                     onChange={(e) => setFormData({ ...formData, relationshipIntention: e.target.value })}
                   >
-                    <option value="">No preference</option>
+                    <option value="">{t('noPreference')}</option>
                     <option value="SERIOUS_RELATIONSHIP">Serious Relationship</option>
                     <option value="MARRIAGE">Marriage</option>
                     <option value="LONG_TERM">Long Term</option>
@@ -231,17 +235,17 @@ export default function EditPreferencesPage() {
                     className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                   />
                   <label htmlFor="openToLongDistance" className="text-sm text-ink-900">
-                    Open to long-distance relationships
+                    {t('openToLongDistance')}
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Smoking</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('smoking')}</label>
                   <Select
                     value={formData.smoking}
                     onChange={(e) => setFormData({ ...formData, smoking: e.target.value })}
                   >
-                    <option value="">No preference</option>
+                    <option value="">{t('noPreference')}</option>
                     <option value="NEVER">Never</option>
                     <option value="OCCASIONALLY">Occasionally</option>
                     <option value="REGULARLY">Regularly</option>
@@ -250,12 +254,12 @@ export default function EditPreferencesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Drinking</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('drinking')}</label>
                   <Select
                     value={formData.drinking}
                     onChange={(e) => setFormData({ ...formData, drinking: e.target.value })}
                   >
-                    <option value="">No preference</option>
+                    <option value="">{t('noPreference')}</option>
                     <option value="NEVER">Never</option>
                     <option value="OCCASIONALLY">Occasionally</option>
                     <option value="REGULARLY">Regularly</option>
@@ -264,12 +268,12 @@ export default function EditPreferencesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-ink-900 mb-2">Children</label>
+                  <label className="block text-sm font-medium text-ink-900 mb-2">{t('childrenPreference')}</label>
                   <Select
                     value={formData.childrenPreference}
                     onChange={(e) => setFormData({ ...formData, childrenPreference: e.target.value })}
                   >
-                    <option value="">No preference</option>
+                    <option value="">{t('noPreference')}</option>
                     <option value="HAS_CHILDREN">Has children</option>
                     <option value="NO_CHILDREN">No children</option>
                     <option value="WANTS_CHILDREN">Wants children</option>

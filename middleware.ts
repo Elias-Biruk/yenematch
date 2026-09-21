@@ -1,40 +1,46 @@
+import createMiddleware from 'next-intl/middleware'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSession } from '@/lib/auth/session'
+import { AuthenticationError } from '@/lib/utils/errors'
+
+const i18nMiddleware = createMiddleware({
+  locales: ['en', 'am', 'om', 'ti'],
+  defaultLocale: 'en',
+  localePrefix: 'as-needed'
+})
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname
-
-  // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/api/auth', '/api/auth/dev-login', '/api/auth/validate', '/onboarding']
-  const isPublicRoute = publicRoutes.some(route => path.startsWith(route))
-
-  // Skip middleware for public routes
-  if (isPublicRoute) {
-    return NextResponse.next()
+  // Apply i18n middleware first
+  const response = i18nMiddleware(request)
+  
+  // Skip auth middleware for certain paths
+  const { pathname } = request.nextUrl
+  const publicPaths = ['/login', '/api/auth', '/onboarding']
+  
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+  
+  if (isPublicPath) {
+    return response
   }
-
-  // Check for session
-  const session = await getSession()
-
-  if (!session) {
-    // Redirect to login if not authenticated
-    return NextResponse.redirect(new URL('/login', request.url))
+  
+  // Check authentication for protected routes
+  try {
+    const session = await getSession()
+    if (!session) {
+      // Redirect to login if not authenticated
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error)
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
-
-  return NextResponse.next()
+  
+  return response
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - api/auth (auth endpoints)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
-  ],
+  matcher: ['/', '/(en|am|om|ti)/:path*', '/((?!api|_next/static|_next/image|favicon.ico).*)']
 }

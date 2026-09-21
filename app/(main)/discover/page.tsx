@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ProfileCard } from '@/components/discovery/profile-card'
 import { MatchModal } from '@/components/discovery/match-modal'
 import { ReportModal } from '@/components/report/report-modal'
@@ -46,6 +47,8 @@ interface MatchData {
 }
 
 export default function DiscoverPage() {
+  const t = useTranslations('discovery')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [profiles, setProfiles] = useState<DiscoveryProfile[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -73,17 +76,17 @@ export default function DiscoverPage() {
             return
           }
         }
-        throw new Error('Failed to fetch profiles')
+        throw new Error(t('failedToFetchProfiles'))
       }
       const data = await response.json()
       setProfiles(data.profiles || [])
       setCurrentIndex(0)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
-  }, [router])
+  }, [router, t, tCommon])
 
   useEffect(() => {
     fetchProfiles()
@@ -111,7 +114,7 @@ export default function DiscoverPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to like profile')
+        throw new Error(data.error || t('failedToLikeProfile'))
       }
 
       const result = await response.json()
@@ -123,7 +126,7 @@ export default function DiscoverPage() {
         await fetchProfiles()
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setActionLoading(false)
     }
@@ -140,13 +143,13 @@ export default function DiscoverPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to pass profile')
+        throw new Error(data.error || t('failedToPassProfile'))
       }
 
       // Simply fetch next profile - simpler approach
       await fetchProfiles()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setActionLoading(false)
     }
@@ -165,7 +168,7 @@ export default function DiscoverPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Finding profiles..." />
+        <LoadingState message={t('findingProfiles')} />
       </div>
     )
   }
@@ -187,14 +190,14 @@ export default function DiscoverPage() {
         <div className="max-w-md mx-auto p-4">
           <EmptyState
             icon="🔍"
-            title="No more Yenes nearby"
-            description="Adjust your preferences or check back later for new profiles"
+            title={t('noProfiles')}
+            description={t('checkBackLater')}
             action={
               <button
                 onClick={() => router.push('/profile/edit')}
                 className="mt-4 text-emerald-600 font-medium"
               >
-                Adjust Preferences
+                {t('adjustPreferences')}
               </button>
             }
           />

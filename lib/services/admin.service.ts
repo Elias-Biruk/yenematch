@@ -64,8 +64,14 @@ export async function createAuditLog(params: {
 }
 
 export async function getDashboardStats() {
+  const SEED_USERNAME_PREFIX = 'seed_user_'
+  const TELEGRAM_ID_OFFSET = 900000000
+  const TELEGRAM_ID_OFFSET_STR = String(TELEGRAM_ID_OFFSET)
+  
   const [
     totalUsers,
+    seedUsers,
+    realUsers,
     completedProfiles,
     activeUsers,
     suspendedUsers,
@@ -74,8 +80,26 @@ export async function getDashboardStats() {
     reviewingReports,
     reviewedReports,
     activeMatches,
+    maleUsers,
+    femaleUsers,
   ] = await Promise.all([
     prisma.user.count(),
+    prisma.user.count({
+      where: {
+        OR: [
+          { username: { startsWith: SEED_USERNAME_PREFIX } },
+          { telegramId: { gte: TELEGRAM_ID_OFFSET_STR } },
+        ],
+      },
+    }),
+    prisma.user.count({
+      where: {
+        AND: [
+          { username: { not: { startsWith: SEED_USERNAME_PREFIX } } },
+          { telegramId: { lt: TELEGRAM_ID_OFFSET_STR } },
+        ],
+      },
+    }),
     prisma.profile.count({ where: { completedOnboarding: true } }),
     prisma.profile.count({ where: { moderationStatus: ModerationStatus.ACTIVE } }),
     prisma.profile.count({ where: { moderationStatus: ModerationStatus.SUSPENDED } }),
@@ -84,10 +108,14 @@ export async function getDashboardStats() {
     prisma.report.count({ where: { status: 'REVIEWING' } }),
     prisma.report.count({ where: { status: 'REVIEWED' } }),
     prisma.match.count({ where: { status: 'ACTIVE' } }),
+    prisma.profile.count({ where: { gender: 'MALE' } }),
+    prisma.profile.count({ where: { gender: 'FEMALE' } }),
   ])
 
   return {
     totalUsers,
+    seedUsers,
+    realUsers,
     completedProfiles,
     activeUsers,
     suspendedUsers,
@@ -96,5 +124,7 @@ export async function getDashboardStats() {
     reviewingReports,
     reviewedReports,
     activeMatches,
+    maleUsers,
+    femaleUsers,
   }
 }

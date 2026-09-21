@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,6 +33,8 @@ interface Match {
 }
 
 export default function MatchesPage() {
+  const t = useTranslations('matches')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,16 +50,16 @@ export default function MatchesPage() {
           router.push('/onboarding')
           return
         }
-        throw new Error('Failed to fetch matches')
+        throw new Error(t('failedToFetchMatches'))
       }
       const data = await response.json()
       setMatches(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
-  }, [router])
+  }, [router, t, tCommon])
 
   useEffect(() => {
     fetchMatches()
@@ -67,7 +70,7 @@ export default function MatchesPage() {
   }
 
   const handleUnmatch = async (matchId: string) => {
-    if (!confirm('Are you sure you want to unmatch?')) {
+    if (!confirm(t('confirmUnmatch'))) {
       return
     }
 
@@ -77,19 +80,19 @@ export default function MatchesPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to unmatch')
+        throw new Error(t('failedToUnmatch'))
       }
 
       setMatches(matches.filter(m => m.id !== matchId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     }
   }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Loading matches..." />
+        <LoadingState message={t('loadingMatches')} />
       </div>
     )
   }
@@ -110,7 +113,7 @@ export default function MatchesPage() {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">Matches</h1>
+          <h1 className="text-xl font-semibold text-ink-900">{t('matches')}</h1>
         </div>
 
         {/* Matches List */}
@@ -118,11 +121,11 @@ export default function MatchesPage() {
           {matches.length === 0 ? (
             <EmptyState
               icon="💕"
-              title="No matches yet"
-              description="Start discovering people to find your matches"
+              title={t('noMatches')}
+              description={t('startLiking')}
               action={
                 <Button onClick={() => router.push('/discover')}>
-                  Start Discovering
+                  {t('startDiscovering')}
                 </Button>
               }
             />
@@ -166,7 +169,7 @@ export default function MatchesPage() {
                           </p>
                         ) : (
                           <p className="text-xs text-ink-500 mt-1">
-                            Matched {new Date(match.createdAt).toLocaleDateString()}
+                            {t('matchedOn')} {new Date(match.createdAt).toLocaleDateString()}
                           </p>
                         )}
                       </div>

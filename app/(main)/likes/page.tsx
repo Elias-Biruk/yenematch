@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -27,14 +28,12 @@ interface LikedProfile {
 }
 
 export default function LikesPage() {
+  const t = useTranslations('likes')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [likes, setLikes] = useState<LikedProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchLikes()
-  }, [])
 
   const fetchLikes = async () => {
     try {
@@ -45,19 +44,23 @@ export default function LikesPage() {
           router.push('/login')
           return
         }
-        throw new Error('Failed to fetch likes')
+        throw new Error(t('failedToFetchLikes'))
       }
       const data = await response.json()
       setLikes(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
   }
 
+  useEffect(() => {
+    fetchLikes()
+  }, [])
+
   const handleUnlike = async (profileId: string) => {
-    if (!confirm('Are you sure you want to remove this like?')) {
+    if (!confirm(t('confirmUnlike'))) {
       return
     }
 
@@ -67,19 +70,19 @@ export default function LikesPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to unlike')
+        throw new Error(t('failedToUnlike'))
       }
 
       setLikes(likes.filter(l => l.id !== profileId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     }
   }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Loading likes..." />
+        <LoadingState message={t('loadingLikes')} />
       </div>
     )
   }
@@ -100,7 +103,7 @@ export default function LikesPage() {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">Your Likes</h1>
+          <h1 className="text-xl font-semibold text-ink-900">{t('yourLikes')}</h1>
         </div>
 
         {/* Likes List */}
@@ -108,11 +111,11 @@ export default function LikesPage() {
           {likes.length === 0 ? (
             <EmptyState
               icon="❤️"
-              title="No likes yet"
-              description="Start discovering people to like"
+              title={t('noLikes')}
+              description={t('startLiking')}
               action={
                 <Button onClick={() => router.push('/discover')}>
-                  Start Discovering
+                  {t('startDiscovering')}
                 </Button>
               }
             />

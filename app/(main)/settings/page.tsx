@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ErrorState } from '@/components/ui/error'
 import { BottomNav } from '@/components/layout/bottom-nav'
+import { Header } from '@/components/layout/header'
+import { LanguageSelector } from '@/components/language-selector'
 import { LogOut, User, Shield, Users, Trash2, ArrowRight } from 'lucide-react'
 
 interface BlockedUser {
@@ -23,14 +26,32 @@ interface BlockedUser {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings')
+  const tCommon = useTranslations('common')
+  const tAccount = useTranslations('account')
+  const tApp = useTranslations('app')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchBlockedUsers()
+    fetchUserRole()
   }, [])
+
+  const fetchUserRole = async () => {
+    try {
+      const response = await fetch('/api/user/role')
+      if (response.ok) {
+        const data = await response.json()
+        setIsAdmin(data.isAdmin)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user role:', err)
+    }
+  }
 
   const fetchBlockedUsers = async () => {
     try {
@@ -46,7 +67,7 @@ export default function SettingsPage() {
   }
 
   const handleLogout = async () => {
-    if (!confirm('Are you sure you want to logout?')) {
+    if (!confirm(t('logout') + '?')) {
       return
     }
 
@@ -57,12 +78,12 @@ export default function SettingsPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to logout')
+        throw new Error(t('logout'))
       }
 
       router.push('/login')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
@@ -105,9 +126,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">Settings</h1>
-        </div>
+        <Header title={t('settings')} showLanguageSelector={true} />
 
         {/* Settings Options */}
         <div className="p-4 space-y-3">
@@ -121,7 +140,7 @@ export default function SettingsPage() {
           {/* Account Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Account</CardTitle>
+              <CardTitle className="text-lg">{t('accountSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button
@@ -130,7 +149,7 @@ export default function SettingsPage() {
                 onClick={() => router.push('/profile/edit')}
               >
                 <User className="h-5 w-5 mr-3" />
-                Edit Profile
+                {t('editProfile')}
                 <ArrowRight className="h-5 w-5 ml-auto" />
               </Button>
               <Button
@@ -139,9 +158,20 @@ export default function SettingsPage() {
                 onClick={() => router.push('/profile/preferences')}
               >
                 <Shield className="h-5 w-5 mr-3" />
-                Dating Preferences
+                {t('editPreferences')}
                 <ArrowRight className="h-5 w-5 ml-auto" />
               </Button>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/admin/dashboard')}
+                >
+                  <Users className="h-5 w-5 mr-3" />
+                  Admin Panel
+                  <ArrowRight className="h-5 w-5 ml-auto" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 className="w-full justify-start text-red-500 hover:text-red-600"
@@ -149,7 +179,7 @@ export default function SettingsPage() {
                 disabled={loading}
               >
                 <LogOut className="h-5 w-5 mr-3" />
-                {loading ? 'Logging out...' : 'Logout'}
+                {loading ? tCommon('loading') : t('logout')}
               </Button>
             </CardContent>
           </Card>
@@ -157,7 +187,7 @@ export default function SettingsPage() {
           {/* Privacy & Safety Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Privacy & Safety</CardTitle>
+              <CardTitle className="text-lg">{t('privacy')} & {t('notifications')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
@@ -166,18 +196,9 @@ export default function SettingsPage() {
                 onClick={() => router.push('/settings/blocked')}
               >
                 <Users className="h-5 w-5 mr-3" />
-                Blocked Users
+                {t('blockedUsers')}
                 <span className="ml-auto text-xs text-ink-500">{blockedUsers.length}</span>
                 <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                disabled
-              >
-                <Shield className="h-5 w-5 mr-3" />
-                Report History
-                <span className="ml-auto text-xs text-ink-500">Coming soon</span>
               </Button>
             </CardContent>
           </Card>
@@ -195,18 +216,18 @@ export default function SettingsPage() {
                 disabled={loading}
               >
                 <Trash2 className="h-5 w-5 mr-3" />
-                {loading ? 'Deleting...' : 'Delete Account'}
+                {loading ? tCommon('deleting') : t('deleteAccount')}
               </Button>
               <p className="text-xs text-ink-500 mt-2">
-                This will permanently delete your account and all associated data. This action cannot be undone.
+                {tAccount('deleteAccountWarning')}
               </p>
             </CardContent>
           </Card>
 
           {/* App Info */}
           <div className="text-center text-sm text-ink-500 pt-4">
-            <p>YeneMatch v1.0.0</p>
-            <p className="mt-1">Find Your Yene</p>
+            <p>{tApp('name')} v1.0.0</p>
+            <p className="mt-1">{tApp('tagline')}</p>
           </div>
         </div>
       </div>

@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { LoadingState } from '@/components/ui/loading'
 import { ErrorState } from '@/components/ui/error'
 import { EmptyState } from '@/components/ui/empty'
+import { Header } from '@/components/layout/header'
 import { Edit2, Settings, LogOut } from 'lucide-react'
 
 interface Profile {
@@ -38,14 +40,32 @@ interface Profile {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
+  const tNav = useTranslations('navigation')
+  const tSettings = useTranslations('settings')
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchProfile()
+    fetchUserRole()
   }, [])
+
+  const fetchUserRole = async () => {
+    try {
+      const response = await fetch('/api/user/role')
+      if (response.ok) {
+        const data = await response.json()
+        setIsAdmin(data.isAdmin)
+      }
+    } catch (err) {
+      console.error('Failed to fetch user role:', err)
+    }
+  }
 
   const fetchProfile = async () => {
     try {
@@ -55,12 +75,12 @@ export default function ProfilePage() {
           router.push('/onboarding')
           return
         }
-        throw new Error('Failed to fetch profile')
+        throw new Error(t('failedToFetchProfile'))
       }
       const data = await response.json()
       setProfile(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
@@ -78,7 +98,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Loading profile..." />
+        <LoadingState message={t('loadingProfile')} />
       </div>
     )
   }
@@ -98,11 +118,11 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <EmptyState
-          title="No profile found"
-          description="Complete onboarding to create your profile"
+          title={t('noProfile')}
+          description={t('completeProfile')}
           action={
             <Button onClick={() => router.push('/onboarding')}>
-              Start Onboarding
+              {tNav('onboarding')}
             </Button>
           }
         />
@@ -116,17 +136,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-cream-300 pb-20">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white p-4 border-b border-cream-400 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-ink-900">My Profile</h1>
-          <div className="flex space-x-2">
-            <Button variant="ghost" size="sm" onClick={() => router.push('/profile/edit')}>
-              <Edit2 className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/settings')}>
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <Header title={t('myProfile')} showLanguageSelector={true} isAdmin={isAdmin} />
 
         {/* Profile Content */}
         <div className="p-4 space-y-4">
@@ -162,7 +172,7 @@ export default function ProfilePage() {
           {profile.bio && (
             <Card>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-ink-900 mb-2">About</h3>
+                <h3 className="font-semibold text-ink-900 mb-2">{t('about')}</h3>
                 <p className="text-ink-700">{profile.bio}</p>
               </CardContent>
             </Card>
@@ -172,7 +182,7 @@ export default function ProfilePage() {
           {profile.interests.length > 0 && (
             <Card>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-ink-900 mb-3">Interests</h3>
+                <h3 className="font-semibold text-ink-900 mb-3">{t('interests')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.interests.map((interest) => (
                     <span
@@ -191,32 +201,32 @@ export default function ProfilePage() {
           {profile.preferences && (
             <Card>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-ink-900 mb-3">Dating Preferences</h3>
+                <h3 className="font-semibold text-ink-900 mb-3">{t('datingPreferences')}</h3>
                 <div className="space-y-2 text-sm text-ink-700">
                   {profile.preferences.preferredGender && (
-                    <p><span className="font-medium">Looking for:</span> {profile.preferences.preferredGender}</p>
+                    <p><span className="font-medium">{t('lookingFor')}:</span> {profile.preferences.preferredGender}</p>
                   )}
-                  <p><span className="font-medium">Age range:</span> {profile.preferences.minAge} - {profile.preferences.maxAge}</p>
+                  <p><span className="font-medium">{t('ageRange')}:</span> {profile.preferences.minAge} - {profile.preferences.maxAge}</p>
                   {profile.preferences.preferredCity && (
-                    <p><span className="font-medium">Preferred city:</span> {profile.preferences.preferredCity}</p>
+                    <p><span className="font-medium">{t('preferredCity')}:</span> {profile.preferences.preferredCity}</p>
                   )}
                   {profile.preferences.relationshipIntention && (
-                    <p><span className="font-medium">Relationship intention:</span> {profile.preferences.relationshipIntention.replace(/_/g, ' ').toLowerCase()}</p>
+                    <p><span className="font-medium">{t('relationshipIntention')}:</span> {profile.preferences.relationshipIntention.replace(/_/g, ' ').toLowerCase()}</p>
                   )}
                   {profile.preferences.openToLongDistance && (
-                    <p><span className="font-medium">Open to long distance</span></p>
+                    <p><span className="font-medium">{t('openToLongDistance')}</span></p>
                   )}
                   {profile.preferences.smoking && (
-                    <p><span className="font-medium">Smoking:</span> {profile.preferences.smoking.replace(/_/g, ' ').toLowerCase()}</p>
+                    <p><span className="font-medium">{t('smoking')}:</span> {profile.preferences.smoking.replace(/_/g, ' ').toLowerCase()}</p>
                   )}
                   {profile.preferences.drinking && (
-                    <p><span className="font-medium">Drinking:</span> {profile.preferences.drinking.replace(/_/g, ' ').toLowerCase()}</p>
+                    <p><span className="font-medium">{t('drinking')}:</span> {profile.preferences.drinking.replace(/_/g, ' ').toLowerCase()}</p>
                   )}
                   {profile.preferences.childrenPreference && (
-                    <p><span className="font-medium">Children:</span> {profile.preferences.childrenPreference.replace(/_/g, ' ').toLowerCase()}</p>
+                    <p><span className="font-medium">{t('children')}:</span> {profile.preferences.childrenPreference.replace(/_/g, ' ').toLowerCase()}</p>
                   )}
                   {profile.preferences.languages && profile.preferences.languages.length > 0 && (
-                    <p><span className="font-medium">Languages:</span> {profile.preferences.languages.join(', ')}</p>
+                    <p><span className="font-medium">{t('languages')}:</span> {profile.preferences.languages.join(', ')}</p>
                   )}
                 </div>
               </CardContent>
@@ -227,7 +237,7 @@ export default function ProfilePage() {
           {profile.photos.length > 1 && (
             <Card>
               <CardContent className="p-6">
-                <h3 className="font-semibold text-ink-900 mb-3">Photos</h3>
+                <h3 className="font-semibold text-ink-900 mb-3">{t('photos')}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {profile.photos.map((photo) => (
                     <div
@@ -255,7 +265,7 @@ export default function ProfilePage() {
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5 mr-2" />
-            Log Out
+            {tSettings('logout')}
           </Button>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,14 +33,12 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const t = useTranslations('messages')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchConversations()
-  }, [])
 
   const fetchConversations = async () => {
     try {
@@ -50,16 +49,20 @@ export default function MessagesPage() {
           router.push('/login')
           return
         }
-        throw new Error('Failed to fetch conversations')
+        throw new Error(t('failedToFetchConversations'))
       }
       const data = await response.json()
       setConversations(data)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchConversations()
+  }, [])
 
   const handleMessage = (matchId: string) => {
     router.push(`/messages/${matchId}`)
@@ -68,7 +71,7 @@ export default function MessagesPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Loading conversations..." />
+        <LoadingState message={t('loadingConversations')} />
       </div>
     )
   }
@@ -89,7 +92,7 @@ export default function MessagesPage() {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white p-4 border-b border-cream-400">
-          <h1 className="text-xl font-semibold text-ink-900">Messages</h1>
+          <h1 className="text-xl font-semibold text-ink-900">{t('messages')}</h1>
         </div>
 
         {/* Conversations List */}
@@ -97,11 +100,11 @@ export default function MessagesPage() {
           {conversations.length === 0 ? (
             <EmptyState
               icon="💬"
-              title="No conversations yet"
-              description="Match with people to start chatting"
+              title={t('noMessages')}
+              description={t('sayHello')}
               action={
                 <Button onClick={() => router.push('/discover')}>
-                  Start Discovering
+                  {t('startDiscovering')}
                 </Button>
               }
             />
@@ -111,7 +114,7 @@ export default function MessagesPage() {
               const lastMessage = conversation.messages[0]
               const messagePreview = lastMessage 
                 ? (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content)
-                : 'No messages yet'
+                : t('noMessagesYet')
 
               return (
                 <Card 

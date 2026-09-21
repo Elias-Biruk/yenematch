@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Logo } from '@/components/brand/logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,14 @@ interface FormData {
 }
 
 export default function OnboardingPage() {
+  const t = useTranslations('onboarding')
+  const tCommon = useTranslations('common')
+  const tGender = useTranslations('gender')
+  const tRelIntention = useTranslations('relationshipIntention')
+  const tLifestyle = useTranslations('lifestyle')
+  const tChildren = useTranslations('children')
+  const tApp = useTranslations('app')
+  
   const router = useRouter()
   const [step, setStep] = useState<Step>('age')
   const [loading, setLoading] = useState(false)
@@ -81,24 +90,24 @@ export default function OnboardingPage() {
     
     if (step === 'age') {
       if (!formData.ageConfirmed) {
-        setError('Please confirm you are 18 or older')
+        setError(t('pleaseConfirmAge'))
         return
       }
       setStep('basic')
     } else if (step === 'basic') {
       if (!formData.firstName || !formData.lastName || !formData.age || !formData.gender || !formData.city) {
-        setError('Please fill in all required fields')
+        setError(t('fillRequiredFields'))
         return
       }
       const age = parseInt(formData.age)
       if (age < MIN_AGE || age > MAX_AGE) {
-        setError(`Age must be between ${MIN_AGE} and ${MAX_AGE}`)
+        setError(t('ageMustBeBetween', { min: MIN_AGE, max: MAX_AGE }))
         return
       }
       setStep('preferences')
     } else if (step === 'preferences') {
       if (formData.minAge > formData.maxAge) {
-        setError('Minimum age must be less than or equal to maximum age')
+        setError(t('minAgeGreaterThanMax'))
         return
       }
       setStep('photos')
@@ -171,7 +180,7 @@ export default function OnboardingPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to create profile')
+        throw new Error(data.error || t('failedToCreateProfile'))
       }
 
       setStep('complete')
@@ -179,7 +188,7 @@ export default function OnboardingPage() {
         router.push('/discover')
       }, 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : t('anErrorOccurred'))
     } finally {
       setLoading(false)
     }
@@ -188,7 +197,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <LoadingState message="Creating your profile..." />
+        <LoadingState message={t('creatingProfile')} />
       </div>
     )
   }
@@ -204,7 +213,7 @@ export default function OnboardingPage() {
         {step !== 'complete' && (
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm text-ink-500 mb-2">
-              <span>Step {stepNumber} of 5</span>
+              <span>{t('stepOf')} {stepNumber} of 5</span>
               <span>{Math.round((stepNumber / 5) * 100)}%</span>
             </div>
             <div className="h-2 bg-cream-400 rounded-full overflow-hidden">
@@ -221,8 +230,8 @@ export default function OnboardingPage() {
             {step === 'age' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Welcome to YeneMatch</h1>
-                  <p className="text-ink-700">Before we begin, please confirm your age.</p>
+                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('welcomeToApp', { appName: tApp('name') })}</h1>
+                  <p className="text-ink-700">{t('confirmAge')}</p>
                 </div>
                 
                 <label className="flex items-start space-x-3 cursor-pointer">
@@ -231,14 +240,14 @@ export default function OnboardingPage() {
                     onChange={(e) => setFormData({ ...formData, ageConfirmed: e.target.checked })}
                   />
                   <span className="text-sm text-ink-700">
-                    I confirm that I am 18 years of age or older
+                    {t('confirmAge18')}
                   </span>
                 </label>
 
                 {error && <p className="text-sm text-burgundy-500">{error}</p>}
 
                 <Button onClick={handleNext} className="w-full" disabled={!formData.ageConfirmed}>
-                  Continue
+                  {tCommon('next')}
                 </Button>
               </div>
             )}
@@ -246,64 +255,64 @@ export default function OnboardingPage() {
             {step === 'basic' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Tell us about yourself</h1>
-                  <p className="text-ink-700">Basic information to help you find matches.</p>
+                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('tellUsAboutYou')}</h1>
+                  <p className="text-ink-700">{t('basicInfo')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">First name</label>
+                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('firstName')}</label>
                       <Input
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        placeholder="First name"
+                        placeholder={t('firstName')}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">Last name</label>
+                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('lastName')}</label>
                       <Input
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        placeholder="Last name"
+                        placeholder={t('lastName')}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Age</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourAge')}</label>
                     <Input
                       type="number"
                       min={MIN_AGE}
                       max={MAX_AGE}
                       value={formData.age}
                       onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                      placeholder={`Enter your age (${MIN_AGE}-${MAX_AGE})`}
+                      placeholder={t('enterAge', { min: MIN_AGE, max: MAX_AGE })}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Gender</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourGender')}</label>
                     <Select
                       value={formData.gender}
                       onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     >
-                      <option value="">Select gender</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
+                      <option value="">{t('selectGender')}</option>
+                      <option value="MALE">{tGender('male')}</option>
+                      <option value="FEMALE">{tGender('female')}</option>
+                      <option value="OTHER">{tGender('other')}</option>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">City</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('yourCity')}</label>
                     <Input
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="Enter your city"
+                      placeholder={t('enterCity')}
                     />
                   </div>
                 </div>
@@ -312,10 +321,10 @@ export default function OnboardingPage() {
 
                 <div className="flex space-x-3">
                   <Button onClick={handleBack} variant="outline" className="flex-1">
-                    Back
+                    {tCommon('back')}
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
-                    Continue
+                    {tCommon('next')}
                   </Button>
                 </div>
               </div>
@@ -324,27 +333,27 @@ export default function OnboardingPage() {
             {step === 'preferences' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Your preferences</h1>
-                  <p className="text-ink-700">Who would you like to meet?</p>
+                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('yourPreferences')}</h1>
+                  <p className="text-ink-700">{t('whoYouWantToMeet')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Preferred gender</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('preferredGender')}</label>
                     <Select
                       value={formData.preferredGender}
                       onChange={(e) => setFormData({ ...formData, preferredGender: e.target.value })}
                     >
-                      <option value="">No preference</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
+                      <option value="">{t('noPreference')}</option>
+                      <option value="MALE">{tGender('male')}</option>
+                      <option value="FEMALE">{tGender('female')}</option>
+                      <option value="OTHER">{tGender('other')}</option>
                     </Select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">Min age</label>
+                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('minAge')}</label>
                       <Input
                         type="number"
                         min={MIN_AGE}
@@ -354,7 +363,7 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-ink-900 mb-2">Max age</label>
+                      <label className="block text-sm font-medium text-ink-900 mb-2">{t('maxAge')}</label>
                       <Input
                         type="number"
                         min={MIN_AGE}
@@ -366,29 +375,29 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Preferred city (optional)</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('preferredCityOptional')}</label>
                     <Input
                       type="text"
                       value={formData.preferredCity}
                       onChange={(e) => setFormData({ ...formData, preferredCity: e.target.value })}
-                      placeholder="Enter preferred city"
+                      placeholder={t('enterPreferredCity')}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">What are you looking for?</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('lookingFor')}</label>
                     <Select
                       value={formData.relationshipIntention}
                       onChange={(e) => setFormData({ ...formData, relationshipIntention: e.target.value })}
                     >
-                      <option value="">Select an option</option>
-                      <option value="SERIOUS_RELATIONSHIP">Serious relationship</option>
-                      <option value="MARRIAGE">Marriage</option>
-                      <option value="LONG_TERM">Long-term relationship</option>
-                      <option value="DATING">Dating</option>
-                      <option value="CASUAL_DATING">Casual dating</option>
-                      <option value="FRIENDSHIP_FIRST">Friendship first</option>
-                      <option value="NOT_SURE">Not sure yet</option>
+                      <option value="">{t('selectOption')}</option>
+                      <option value="SERIOUS_RELATIONSHIP">{t('seriousRelationship')}</option>
+                      <option value="MARRIAGE">{t('marriage')}</option>
+                      <option value="LONG_TERM">{t('longTermRelationship')}</option>
+                      <option value="DATING">{t('dating')}</option>
+                      <option value="CASUAL_DATING">{t('casualDating')}</option>
+                      <option value="FRIENDSHIP_FIRST">{t('friendshipFirst')}</option>
+                      <option value="NOT_SURE">{t('notSureYet')}</option>
                     </Select>
                   </div>
 
@@ -397,60 +406,60 @@ export default function OnboardingPage() {
                       checked={formData.openToLongDistance}
                       onChange={(e) => setFormData({ ...formData, openToLongDistance: e.target.checked })}
                     />
-                    <span className="text-sm text-ink-700">Open to long-distance relationships</span>
+                    <span className="text-sm text-ink-700">{t('openToLongDistance')}</span>
                   </label>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Smoking preference</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('smokingPreference')}</label>
                     <Select
                       value={formData.smoking}
                       onChange={(e) => setFormData({ ...formData, smoking: e.target.value })}
                     >
-                      <option value="">No preference</option>
-                      <option value="NEVER">Non-smoker</option>
-                      <option value="OCCASIONALLY">Occasionally</option>
-                      <option value="REGULARLY">Smoker</option>
-                      <option value="DOESNT_MATTER">Doesn&apos;t matter</option>
+                      <option value="">{t('noPreference')}</option>
+                      <option value="NEVER">{t('nonSmoker')}</option>
+                      <option value="OCCASIONALLY">{t('occasionally')}</option>
+                      <option value="REGULARLY">{t('smoker')}</option>
+                      <option value="DOESNT_MATTER">{t('doesntMatter')}</option>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Drinking preference</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('drinkingPreference')}</label>
                     <Select
                       value={formData.drinking}
                       onChange={(e) => setFormData({ ...formData, drinking: e.target.value })}
                     >
-                      <option value="">No preference</option>
-                      <option value="NEVER">Doesn&apos;t drink</option>
-                      <option value="OCCASIONALLY">Occasionally</option>
-                      <option value="REGULARLY">Regularly</option>
-                      <option value="DOESNT_MATTER">Doesn&apos;t matter</option>
+                      <option value="">{t('noPreference')}</option>
+                      <option value="NEVER">{t('doesntDrink')}</option>
+                      <option value="OCCASIONALLY">{t('occasionally')}</option>
+                      <option value="REGULARLY">{t('regularly')}</option>
+                      <option value="DOESNT_MATTER">{t('doesntMatter')}</option>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Children preference</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('childrenPreference')}</label>
                     <Select
                       value={formData.childrenPreference}
                       onChange={(e) => setFormData({ ...formData, childrenPreference: e.target.value })}
                     >
-                      <option value="">No preference</option>
-                      <option value="HAS_CHILDREN">Has children</option>
-                      <option value="NO_CHILDREN">No children</option>
-                      <option value="WANTS_CHILDREN">Wants children</option>
-                      <option value="DOESNT_WANT_CHILDREN">Doesn&apos;t want children</option>
-                      <option value="MAYBE_SOMEDAY">Maybe someday</option>
-                      <option value="NOT_SURE">Not sure</option>
+                      <option value="">{t('noPreference')}</option>
+                      <option value="HAS_CHILDREN">{t('hasChildren')}</option>
+                      <option value="NO_CHILDREN">{t('noChildren')}</option>
+                      <option value="WANTS_CHILDREN">{t('wantsChildren')}</option>
+                      <option value="DOESNT_WANT_CHILDREN">{t('doesntWantChildren')}</option>
+                      <option value="MAYBE_SOMEDAY">{t('maybeSomeday')}</option>
+                      <option value="NOT_SURE">{t('notSure')}</option>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Languages (optional)</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('languagesOptional')}</label>
                     <Input
                       type="text"
                       value={formData.languages.join(', ')}
                       onChange={(e) => setFormData({ ...formData, languages: e.target.value.split(',').map(l => l.trim()).filter(l => l) })}
-                      placeholder="e.g., Amharic, English, Afaan Oromo"
+                      placeholder={t('languagesPlaceholder')}
                     />
                   </div>
                 </div>
@@ -459,10 +468,10 @@ export default function OnboardingPage() {
 
                 <div className="flex space-x-3">
                   <Button onClick={handleBack} variant="outline" className="flex-1">
-                    Back
+                    {tCommon('back')}
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
-                    Continue
+                    {tCommon('next')}
                   </Button>
                 </div>
               </div>
@@ -471,17 +480,17 @@ export default function OnboardingPage() {
             {step === 'photos' && (
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-2xl font-bold text-ink-900 mb-2">Add photos</h1>
-                  <p className="text-ink-700">Add photo URLs to showcase yourself (optional).</p>
+                  <h1 className="text-2xl font-bold text-ink-900 mb-2">{t('addPhotos')}</h1>
+                  <p className="text-ink-700">{t('addPhotoUrls')}</p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Bio (optional)</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('bioOptional')}</label>
                     <Textarea
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      placeholder="Write something about yourself..."
+                      placeholder={t('writeAboutYourself')}
                       rows={3}
                       maxLength={500}
                     />
@@ -489,17 +498,17 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-ink-900 mb-2">Interests (optional)</label>
+                    <label className="block text-sm font-medium text-ink-900 mb-2">{t('interestsOptional')}</label>
                     <div className="flex space-x-2">
                       <Input
                         type="text"
                         value={interestInput}
                         onChange={(e) => setInterestInput(e.target.value)}
-                        placeholder="Add an interest"
+                        placeholder={t('addInterest')}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
                       />
                       <Button onClick={addInterest} variant="outline" size="sm">
-                        Add
+                        {tCommon('add')}
                       </Button>
                     </div>
                     {formData.interests.length > 0 && (
@@ -533,7 +542,7 @@ export default function OnboardingPage() {
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addPhoto())}
                       />
                       <Button onClick={addPhoto} variant="outline" size="sm">
-                        Add
+                        {tCommon('add')}
                       </Button>
                     </div>
                     {formData.photos.length > 0 && (
@@ -545,7 +554,7 @@ export default function OnboardingPage() {
                               onClick={() => removePhoto(index)}
                               className="text-burgundy-500 hover:text-burgundy-700 ml-2"
                             >
-                              Remove
+                              {tCommon('remove')}
                             </button>
                           </div>
                         ))}
@@ -554,16 +563,16 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <p className="text-xs text-ink-500">For development, you can use image URLs. In production, this will be a proper file upload.</p>
+                <p className="text-xs text-ink-500">{t('devPhotoNote')}</p>
 
                 {error && <p className="text-sm text-burgundy-500">{error}</p>}
 
                 <div className="flex space-x-3">
                   <Button onClick={handleBack} variant="outline" className="flex-1">
-                    Back
+                    {tCommon('back')}
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
-                    Continue
+                    {tCommon('next')}
                   </Button>
                 </div>
               </div>

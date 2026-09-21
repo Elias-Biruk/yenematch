@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 export default function LoginPage() {
+  const t = useTranslations()
   const router = useRouter()
   const [devAuthEnabled, setDevAuthEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -87,7 +89,7 @@ export default function LoginPage() {
       if (!response.ok) {
         const data = await response.json()
         console.error('Auth error response:', data)
-        throw new Error(data.error || 'Telegram authentication failed')
+        throw new Error(data.error || t('auth.loginFailed'))
       }
 
       const result = await response.json()
@@ -100,7 +102,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error('Telegram authentication error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Login failed'
+      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
       setError(errorMessage)
       // Don't set isOutsideTelegram on error - we're still in Telegram
     } finally {
@@ -110,7 +112,7 @@ export default function LoginPage() {
 
   const handleTelegramLogin = async () => {
     if (!isTelegramReady) {
-      alert('Please open this app through Telegram')
+      alert(t('auth.openInTelegram'))
       return
     }
 
@@ -126,13 +128,13 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Development login failed')
+        throw new Error(data.error || t('auth.loginFailed'))
       }
 
       router.push('/discover')
     } catch (error) {
       console.error('Dev login error:', error)
-      alert(error instanceof Error ? error.message : 'Login failed')
+      alert(error instanceof Error ? error.message : t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -144,10 +146,10 @@ export default function LoginPage() {
         {/* Branding */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-emerald-500 mb-3">
-            YeneMatch
+            {t('app.name')}
           </h1>
           <p className="text-ink-700 text-xl">
-            Find Your Yene
+            {t('app.tagline')}
           </p>
         </div>
 
@@ -155,17 +157,17 @@ export default function LoginPage() {
         <Card>
           <CardContent className="p-6 space-y-4">
             <h2 className="text-2xl font-semibold text-ink-900 text-center">
-              Welcome
+              {t('common.welcome')}
             </h2>
             <p className="text-ink-700 text-center">
-              Sign in to start discovering amazing people
+              {t('auth.signInToStart')}
             </p>
 
             {/* Auto-authenticating in Telegram */}
             {loading && detectedTelegram && (
               <div className="text-center py-4">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                <p className="text-sm text-ink-600 mt-2">Authenticating with Telegram...</p>
+                <p className="text-sm text-ink-600 mt-2">{t('auth.authenticating')}</p>
               </div>
             )}
 
@@ -178,11 +180,11 @@ export default function LoginPage() {
                   onClick={handleTelegramLogin}
                   disabled={loading}
                 >
-                  {loading ? 'Authenticating...' : 'Continue with Telegram'}
+                  {loading ? t('auth.authenticatingWithTelegram') : t('auth.continueWithTelegram')}
                 </Button>
 
                 <p className="text-xs text-ink-500 text-center">
-                  Open this app through Telegram for authentication
+                  {t('auth.openInTelegram')}
                 </p>
               </>
             )}
@@ -195,7 +197,7 @@ export default function LoginPage() {
                 onClick={handleTelegramLogin}
                 disabled={loading}
               >
-                {loading ? 'Authenticating...' : 'Retry Authentication'}
+                {loading ? t('auth.authenticatingWithTelegram') : t('auth.retryAuth')}
               </Button>
             )}
 
@@ -215,7 +217,7 @@ export default function LoginPage() {
                   </div>
                   <div className="relative flex justify-center text-sm">
                     <span className="px-2 bg-white text-ink-500">
-                      Development Mode
+                      {t('auth.developmentMode')}
                     </span>
                   </div>
                 </div>
@@ -227,11 +229,11 @@ export default function LoginPage() {
                   onClick={handleDevLogin}
                   disabled={loading}
                 >
-                  {loading ? 'Logging in...' : 'Dev Login (Skip Auth)'}
+                  {loading ? t('auth.loggingIn') : t('auth.devLogin')}
                 </Button>
 
                 <p className="text-xs text-ink-500 text-center">
-                  Development authentication is enabled. This is for local testing only.
+                  {t('auth.devAuthDescription')}
                 </p>
               </>
             )}
@@ -240,7 +242,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-ink-500 mt-6">
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          {t('auth.termsAndPrivacy')}
         </p>
       </div>
     </div>
