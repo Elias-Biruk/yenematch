@@ -13,6 +13,7 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  serverExternalPackages: ['@prisma/client'],
   async headers() {
     return [
       {
