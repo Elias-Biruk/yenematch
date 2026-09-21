@@ -49,7 +49,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/profile')
+      const response = await fetch('/api/profile/me')
       if (!response.ok) {
         if (response.status === 401) {
           router.push('/login')

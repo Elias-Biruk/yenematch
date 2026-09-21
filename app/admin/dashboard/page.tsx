@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, Heart, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
@@ -15,6 +16,7 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
@@ -154,22 +156,38 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <Button variant="outline" className="h-12 text-base">
+            <Button 
+              variant="outline" 
+              className="h-12 text-base"
+              onClick={() => router.push('/admin/users')}
+            >
               <Users className="h-5 w-5 mr-2" />
               <span className="hidden sm:inline">Manage Users</span>
               <span className="sm:hidden">Users</span>
             </Button>
-            <Button variant="outline" className="h-12 text-base">
+            <Button 
+              variant="outline" 
+              className="h-12 text-base"
+              onClick={() => router.push('/admin/reports')}
+            >
               <AlertTriangle className="h-5 w-5 mr-2" />
               <span className="hidden sm:inline">Review Reports</span>
               <span className="sm:hidden">Reports</span>
             </Button>
-            <Button variant="outline" className="h-12 text-base">
+            <Button 
+              variant="outline" 
+              className="h-12 text-base"
+              onClick={() => router.push('/admin/matches')}
+            >
               <Heart className="h-5 w-5 mr-2" />
               <span className="hidden sm:inline">View Matches</span>
               <span className="sm:hidden">Matches</span>
             </Button>
-            <Button variant="outline" className="h-12 text-base">
+            <Button 
+              variant="outline" 
+              className="h-12 text-base"
+              onClick={() => router.push('/admin/audit')}
+            >
               <Activity className="h-5 w-5 mr-2" />
               <span className="hidden sm:inline">View Activity</span>
               <span className="sm:hidden">Activity</span>

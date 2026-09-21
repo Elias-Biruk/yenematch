@@ -184,6 +184,44 @@ export async function createLike(likerId: string, likedId: string) {
   return { like, isMatch: false }
 }
 
+export async function deleteLike(likerId: string, likeId: string) {
+  // Check if liker is suspended or banned
+  const likerProfile = await prisma.profile.findUnique({
+    where: { userId: likerId },
+    select: { moderationStatus: true },
+  })
+
+  if (!likerProfile) {
+    throw new NotFoundError('Profile')
+  }
+
+  if (likerProfile.moderationStatus === ModerationStatus.SUSPENDED) {
+    throw new AuthorizationError('Your account is suspended')
+  }
+
+  if (likerProfile.moderationStatus === ModerationStatus.BANNED) {
+    throw new AuthorizationError('Your account is banned')
+  }
+
+  const like = await prisma.like.findUnique({
+    where: { id: likeId },
+  })
+
+  if (!like) {
+    throw new NotFoundError('Like')
+  }
+
+  if (like.likerId !== likerId) {
+    throw new AuthorizationError('You can only delete your own likes')
+  }
+
+  await prisma.like.delete({
+    where: { id: likeId },
+  })
+
+  return { success: true }
+}
+
 export async function getLikes(userId: string) {
   // Check if user is suspended or banned
   const user = await prisma.profile.findUnique({

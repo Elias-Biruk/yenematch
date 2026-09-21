@@ -59,13 +59,13 @@ export default function LikesPage() {
     fetchLikes()
   }, [])
 
-  const handleUnlike = async (profileId: string) => {
+  const handleUnlike = async (likeId: string) => {
     if (!confirm(t('confirmUnlike'))) {
       return
     }
 
     try {
-      const response = await fetch(`/api/likes/${profileId}`, {
+      const response = await fetch(`/api/likes/${likeId}`, {
         method: 'DELETE',
       })
 
@@ -73,7 +73,7 @@ export default function LikesPage() {
         throw new Error(t('failedToUnlike'))
       }
 
-      setLikes(likes.filter(l => l.id !== profileId))
+      setLikes(likes.filter(l => l.id !== likeId))
     } catch (err) {
       setError(err instanceof Error ? err.message : tCommon('somethingWentWrong'))
     }

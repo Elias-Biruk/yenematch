@@ -24,6 +24,7 @@ export function BottomNav() {
     { labelKey: 'matches', icon: <Heart className="h-6 w-6" />, href: '/matches' },
     { labelKey: 'messages', icon: <MessageSquare className="h-6 w-6" />, href: '/messages' },
     { labelKey: 'profile', icon: <User className="h-6 w-6" />, href: '/profile' },
+    { labelKey: 'settings', icon: <Settings className="h-6 w-6" />, href: '/settings' },
   ]
   
   return (
