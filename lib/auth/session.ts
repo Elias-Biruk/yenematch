@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
+import { prisma } from '@/lib/db/prisma'
 
 const SESSION_COOKIE_NAME = 'yene_session'
 
-// Get session secret with production safety check (runtime only)
 const getSessionSecret = () => {
   const secret = process.env.NEXTAUTH_SECRET || 'dev-secret-do-not-use-in-production'
 
@@ -12,28 +12,38 @@ const getSessionSecret = () => {
   }
 
   if (!process.env.NEXTAUTH_SECRET) {
-    console.warn('WARNING: NEXTAUTH_SECRET not set. Using development-only secret. Do not use in production.')
+    console.warn(
+      'WARNING: NEXTAUTH_SECRET not set. Using development-only secret. Do not use in production.'
+    )
   }
 
   return secret
 }
 
 const SESSION_SECRET = new TextEncoder().encode(getSessionSecret())
-const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000 // 30 days
+const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000
 
 export interface SessionPayload {
   userId: string
   telegramId: string
+  sessionVersion: number
   expiresAt: Date
 }
 
 export async function createSession(payload: SessionPayload) {
-  const token = await new SignJWT({ ...payload })
+  const token = await new SignJWT({
+    userId: payload.userId,
+    telegramId: payload.telegramId,
+    sessionVersion: payload.sessionVersion,
+    expiresAt: payload.expiresAt.toISOString(),
+  })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
     .setExpirationTime('30d')
     .sign(SESSION_SECRET)
 
   const cookieStore = await cookies()
+
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -53,27 +63,80 @@ export async function verifySession(): Promise<SessionPayload | null> {
 
   try {
     const { payload } = await jwtVerify(token, SESSION_SECRET)
-    return payload as unknown as SessionPayload
-  } catch (error) {
+
+    if (
+      typeof payload.userId !== 'string' ||
+      typeof payload.telegramId !== 'string' ||
+      typeof payload.sessionVersion !== 'number' ||
+      typeof payload.expiresAt !== 'string'
+    ) {
+      return null
+    }
+
+    const expiresAt = new Date(payload.expiresAt)
+
+    if (Number.isNaN(expiresAt.getTime())) {
+      return null
+    }
+
+    return {
+      userId: payload.userId,
+      telegramId: payload.telegramId,
+      sessionVersion: payload.sessionVersion,
+      expiresAt,
+    }
+  } catch {
     return null
   }
 }
 
 export async function deleteSession() {
   const cookieStore = await cookies()
-  cookieStore.delete(SESSION_COOKIE_NAME)
+
+  cookieStore.set(SESSION_COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    expires: new Date(0),
+    path: '/',
+  })
 }
 
-export async function getSession() {
+export async function getSession(): Promise<SessionPayload | null> {
   const session = await verifySession()
+
   if (!session) {
     return null
   }
 
-  if (new Date(session.expiresAt) < new Date()) {
+  if (session.expiresAt.getTime() < Date.now()) {
     await deleteSession()
     return null
   }
 
   return session
+}
+
+export async function validateSessionVersion(
+  session: SessionPayload
+): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: session.userId,
+      },
+      select: {
+        sessionVersion: true,
+      },
+    })
+
+    if (!user) {
+      return false
+    }
+
+    return user.sessionVersion === session.sessionVersion
+  } catch (error) {
+    console.error('Error validating session version:', error)
+    return false
+  }
 }

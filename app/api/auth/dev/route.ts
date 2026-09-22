@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
     await createSession({
       userId: user.id,
       telegramId: user.telegramId,
+      sessionVersion: user.sessionVersion || 0,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     })
 

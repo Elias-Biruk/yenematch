@@ -67,6 +67,7 @@ export async function devLogin(telegramId?: string) {
   await createSession({
     userId: user.id,
     telegramId: devTelegramId,
+    sessionVersion: user.sessionVersion || 0,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
   })
 

@@ -11,6 +11,7 @@ export interface AuthResult {
     firstName: string
     lastName: string | null
     username: string | null
+    sessionVersion: number
   }
   isNewUser: boolean
 }
@@ -24,82 +25,87 @@ export async function authenticateWithTelegram(
   }
 
   let telegramUser: TelegramUser
+
   try {
     telegramUser = validateTelegramInitData(initData, botToken)
-  } catch (error) {
+  } catch {
     throw new ValidationError('Invalid Telegram init data')
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { telegramId: telegramUser.id.toString() },
-  })
-
+  const telegramId = telegramUser.id.toString()
   const superAdminTelegramId = process.env.TELEGRAM_SUPERADMIN_USER_ID
 
-  if (existingUser) {
-    // Bootstrap SUPERADMIN role if this is the configured super admin
-    if (superAdminTelegramId && telegramUser.id.toString() === superAdminTelegramId) {
-      if (existingUser.role !== UserRole.SUPER_ADMIN) {
-        await prisma.user.update({
-          where: { id: existingUser.id },
-          data: { role: UserRole.SUPER_ADMIN },
-        })
-        console.log(`User ${existingUser.telegramId} promoted to SUPER_ADMIN`)
-      }
-    }
+  let user = await prisma.user.findUnique({
+    where: {
+      telegramId,
+    },
+  })
 
-    await prisma.user.update({
-      where: { id: existingUser.id },
+  if (!user) {
+    const role =
+      superAdminTelegramId && telegramId === superAdminTelegramId
+        ? UserRole.SUPER_ADMIN
+        : UserRole.USER
+
+    user = await prisma.user.create({
       data: {
+        telegramId,
         firstName: telegramUser.first_name,
         lastName: telegramUser.last_name || null,
         username: telegramUser.username || null,
-        updatedAt: new Date(),
+        role,
       },
     })
 
     return {
       user: {
-        id: existingUser.id,
-        telegramId: existingUser.telegramId,
-        firstName: existingUser.firstName,
-        lastName: existingUser.lastName,
-        username: existingUser.username,
+        id: user.id,
+        telegramId: user.telegramId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        sessionVersion: user.sessionVersion,
       },
-      isNewUser: false,
+      isNewUser: true,
     }
   }
 
-  // Bootstrap SUPERADMIN role for new user if this is the configured super admin
-  const role = (superAdminTelegramId && telegramUser.id.toString() === superAdminTelegramId)
-    ? UserRole.SUPER_ADMIN
-    : UserRole.USER
+  const shouldBeSuperAdmin =
+    superAdminTelegramId && telegramId === superAdminTelegramId
 
-  const newUser = await prisma.user.create({
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
     data: {
-      telegramId: telegramUser.id.toString(),
       firstName: telegramUser.first_name,
       lastName: telegramUser.last_name || null,
       username: telegramUser.username || null,
-      role,
+      ...(shouldBeSuperAdmin && user.role !== UserRole.SUPER_ADMIN
+        ? { role: UserRole.SUPER_ADMIN }
+        : {}),
+      updatedAt: new Date(),
     },
   })
 
   return {
     user: {
-      id: newUser.id,
-      telegramId: newUser.telegramId,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      username: newUser.username,
+      id: updatedUser.id,
+      telegramId: updatedUser.telegramId,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      username: updatedUser.username,
+      sessionVersion: updatedUser.sessionVersion,
     },
-    isNewUser: true,
+    isNewUser: false,
   }
 }
 
 export async function getUserById(userId: string) {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: {
+      id: userId,
+    },
     include: {
       profile: {
         include: {
@@ -118,7 +124,9 @@ export async function getUserById(userId: string) {
 
 export async function getUserByTelegramId(telegramId: string) {
   return prisma.user.findUnique({
-    where: { telegramId },
+    where: {
+      telegramId,
+    },
     include: {
       profile: {
         include: {

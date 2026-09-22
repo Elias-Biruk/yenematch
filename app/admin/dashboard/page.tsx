@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, Heart, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
+import { Users, Heart, AlertTriangle, TrendingUp, Activity, LogOut } from 'lucide-react'
 
 interface Stats {
   totalUsers: number
@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     fetchStats()
@@ -49,12 +50,49 @@ export default function AdminDashboard() {
     }
   }
 
+  const resetAllSessions = async () => {
+    if (!confirm('Are you sure you want to reset all user sessions? This will force all users to re-authenticate.')) {
+      return
+    }
+
+    try {
+      setResetting(true)
+      const response = await fetch('/api/admin/reset-sessions', {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to reset sessions')
+      }
+      alert('All sessions have been reset successfully')
+    } catch (error) {
+      console.error('Failed to reset sessions:', error)
+      alert('Failed to reset sessions')
+    } finally {
+      setResetting(false)
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
         <h2 className="text-display-sm text-ink-900">Dashboard Overview</h2>
         <p className="text-body text-ink-600">Monitor your platform's performance</p>
       </div>
+
+      {/* Reset Sessions Button */}
+      <Card className="shadow-premium mb-6 border-burgundy-200">
+        <CardContent className="p-4">
+          <Button
+            variant="destructive"
+            className="w-full h-12 text-base"
+            onClick={resetAllSessions}
+            disabled={resetting}
+          >
+            <LogOut className="h-5 w-5 mr-2" />
+            {resetting ? 'Resetting Sessions...' : 'Reset All User Sessions'}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Time Range Selector */}
       <div className="mb-6 flex space-x-2">

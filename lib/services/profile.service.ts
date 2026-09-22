@@ -3,12 +3,13 @@ import { ValidationError, NotFoundError } from '@/lib/utils/errors'
 import type { CreateProfileInput, UpdateProfileInput } from '@/lib/validators/profile.schema'
 
 export async function createProfile(userId: string, data: CreateProfileInput) {
-  const existingProfile = await prisma.profile.findUnique({
-    where: { userId },
+  // Verify user exists before updating
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
   })
 
-  if (existingProfile) {
-    throw new ValidationError('Profile already exists')
+  if (!user) {
+    throw new NotFoundError('User')
   }
 
   // Update user's name if provided
@@ -22,6 +23,109 @@ export async function createProfile(userId: string, data: CreateProfileInput) {
     })
   }
 
+  // Check if profile already exists (may have been created by photo upload)
+  const existingProfile = await prisma.profile.findUnique({
+    where: { userId },
+    include: {
+      photos: true,
+      interests: true,
+      preferences: true,
+    },
+  })
+
+  if (existingProfile) {
+    // Update existing profile instead of creating new one
+    const updatedProfile = await prisma.profile.update({
+      where: { userId },
+      data: {
+        age: data.age,
+        gender: data.gender,
+        city: data.city,
+        bio: data.bio,
+        completedOnboarding: true,
+      },
+      include: {
+        photos: true,
+        interests: true,
+        preferences: true,
+      },
+    })
+
+    // Handle photos - only update if new photos are provided
+    if (data.photos && data.photos.length > 0) {
+      await prisma.photo.deleteMany({
+        where: { profileId: existingProfile.id },
+      })
+
+      await prisma.photo.createMany({
+        data: data.photos.map((photo) => ({
+          profileId: existingProfile.id,
+          url: photo.url,
+          order: photo.order,
+          isPrimary: photo.isPrimary,
+        })),
+      })
+    }
+
+    // Handle interests
+    if (data.interests) {
+      await prisma.interest.deleteMany({
+        where: { profileId: existingProfile.id },
+      })
+
+      if (data.interests.length > 0) {
+        await prisma.interest.createMany({
+          data: data.interests.map((name) => ({
+            profileId: existingProfile.id,
+            name,
+          })),
+        })
+      }
+    }
+
+    // Handle preferences
+    if (data.preferredGender || data.minAge || data.maxAge || data.preferredCity ||
+        data.relationshipIntention || data.openToLongDistance || data.smoking ||
+        data.drinking || data.childrenPreference || data.languages) {
+      if (existingProfile.preferences) {
+        await prisma.preference.update({
+          where: { profileId: existingProfile.id },
+          data: {
+            preferredGender: data.preferredGender,
+            minAge: data.minAge || 18,
+            maxAge: data.maxAge || 100,
+            preferredCity: data.preferredCity,
+            relationshipIntention: data.relationshipIntention,
+            openToLongDistance: data.openToLongDistance,
+            smoking: data.smoking,
+            drinking: data.drinking,
+            childrenPreference: data.childrenPreference,
+            languages: data.languages,
+          },
+        })
+      } else {
+        await prisma.preference.create({
+          data: {
+            profileId: existingProfile.id,
+            preferredGender: data.preferredGender,
+            minAge: data.minAge || 18,
+            maxAge: data.maxAge || 100,
+            preferredCity: data.preferredCity,
+            relationshipIntention: data.relationshipIntention,
+            openToLongDistance: data.openToLongDistance,
+            smoking: data.smoking,
+            drinking: data.drinking,
+            childrenPreference: data.childrenPreference,
+            languages: data.languages,
+          },
+        })
+      }
+    }
+
+    return getProfile(userId)
+  }
+
+  // Create new profile if it doesn't exist
   const profile = await prisma.profile.create({
     data: {
       userId,
