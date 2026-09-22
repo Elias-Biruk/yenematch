@@ -37,6 +37,14 @@ export async function getDiscoveryProfiles(
 
   const preferences = currentUser.profile.preferences
 
+  console.log('[Discovery] Current user preferences:', {
+    preferredGender: preferences?.preferredGender,
+    minAge: preferences?.minAge,
+    maxAge: preferences?.maxAge,
+    preferredCity: preferences?.preferredCity,
+    openToLongDistance: preferences?.openToLongDistance,
+  })
+
   // Get IDs of users the current user has already liked
   const likedUserIds = await prisma.like.findMany({
     where: { likerId: currentUserId },
@@ -95,8 +103,13 @@ export async function getDiscoveryProfiles(
 
   // Handle city preference with long-distance consideration
   if (preferences?.preferredCity && !preferences.openToLongDistance) {
-    whereClause.city = preferences.preferredCity
+    whereClause.city = {
+      equals: preferences.preferredCity,
+      mode: 'insensitive',
+    }
   }
+
+  console.log('[Discovery] Where clause:', JSON.stringify(whereClause, null, 2))
 
   const profiles = await prisma.profile.findMany({
     where: whereClause,
@@ -148,7 +161,7 @@ export async function getDiscoveryProfiles(
     
     // Check city preference if candidate is not open to long distance
     if (candidatePrefs.preferredCity && !candidatePrefs.openToLongDistance) {
-      if (currentUser.profile?.city !== candidatePrefs.preferredCity) {
+      if (currentUser.profile?.city.toLowerCase() !== candidatePrefs.preferredCity.toLowerCase()) {
         return false
       }
     }
