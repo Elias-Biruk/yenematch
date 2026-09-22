@@ -115,6 +115,7 @@ model Profile {
 
   @@index([userId])
   @@index([gender])
+  @@index([age])
   @@index([city])
   @@index([moderationStatus])
 }

@@ -83,10 +83,13 @@ export async function getDiscoveryProfiles(
     whereClause.gender = preferences.preferredGender
   }
 
-  if (preferences?.minAge && preferences?.maxAge) {
-    whereClause.age = {
-      gte: preferences.minAge,
-      lte: preferences.maxAge,
+  if (preferences?.minAge || preferences?.maxAge) {
+    whereClause.age = {}
+    if (preferences.minAge) {
+      whereClause.age.gte = preferences.minAge
+    }
+    if (preferences.maxAge) {
+      whereClause.age.lte = preferences.maxAge
     }
   }
 
